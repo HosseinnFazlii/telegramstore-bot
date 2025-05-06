@@ -1,0 +1,43 @@
+services:
+  backend:
+    build: .
+    command: python manage.py runserver 0.0.0.0:8000
+    volumes:
+      - .:/app
+    ports:
+      - "8000:8000"
+    environment:
+      - DEBUG=1
+      - DB_NAME=account_db
+      - DB_USER=account_user
+      - DB_PASSWORD=account_pass
+      - DB_HOST=db
+      - DB_PORT=5432
+    depends_on:
+      - db
+
+  db:
+    container_name: db1
+    image: postgres:13
+    environment:
+      POSTGRES_DB: account_db
+      POSTGRES_USER: account_user
+      POSTGRES_PASSWORD: account_pass
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+  # Uncomment this block when you need Nginx for production or testing
+  # nginx:
+  #   image: nginx:latest
+  #   ports:
+  #     - "80:80"
+  #     - "443:443"
+  #   volumes:
+  #     - ./nginx.conf:/etc/nginx/conf.d/default.conf:ro  # Mount NGINX configuration
+  #     - ./ssl/cert.crt:/etc/nginx/ssl/cert.crt:ro      # SSL certificate
+  #     - ./ssl/private.key:/etc/nginx/ssl/private.key:ro # SSL private key
+  #   depends_on:
+  #     - backend
+
+volumes:
+  postgres_data:
