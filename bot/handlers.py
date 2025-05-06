@@ -1,4 +1,3 @@
-# bot/handlers.py
 import re
 from telegram import Update, ReplyKeyboardMarkup, KeyboardButton
 from telegram.ext import CallbackContext
@@ -21,16 +20,21 @@ def update_user_phone_sync(telegram_id, phone):
 def get_all_products_sync():
     return list(Product.objects.prefetch_related('images').all())
 
+@sync_to_async
+def user_has_phone_sync(telegram_id):
+    user = TelegramUser.objects.filter(telegram_id=telegram_id, phone_number__isnull=False).first()
+    return bool(user)
+
 async def start_handler(update: Update, context: CallbackContext):
     telegram_id = update.effective_user.id
     user, created = await get_or_create_user_sync(telegram_id=telegram_id)
 
-    if created:
+    if user.phone_number:
+        await show_main_menu(update)
+    else:
         msg = await get_msg_sync("firsttime")
         if msg:
             await update.message.reply_text(msg.message)
-    else:
-        await show_main_menu(update)
 
 async def phone_handler(update: Update, context: CallbackContext):
     phone = update.message.text.strip()
@@ -41,10 +45,16 @@ async def phone_handler(update: Update, context: CallbackContext):
         return
 
     telegram_id = update.effective_user.id
-    await update_user_phone_sync(telegram_id=telegram_id, phone_number=phone)
+    await update_user_phone_sync(telegram_id=telegram_id, phone=phone)
     await show_main_menu(update)
 
 async def show_main_menu(update: Update):
+    telegram_id = update.effective_user.id
+    if not await user_has_phone_sync(telegram_id):
+        msg = await get_msg_sync("error1")
+        await update.message.reply_text(msg.message if msg else "شماره موبایل شما ثبت نشده است.")
+        return
+
     btn1 = await get_msg_sync("menue1")
     btn2 = await get_msg_sync("menue2")
     btn3 = await get_msg_sync("menue3")
@@ -59,6 +69,12 @@ async def show_main_menu(update: Update):
     await update.message.reply_text(menu_msg.message if menu_msg else "Choose from below:", reply_markup=reply_markup)
 
 async def menu1_handler(update: Update, context: CallbackContext):
+    telegram_id = update.effective_user.id
+    if not await user_has_phone_sync(telegram_id):
+        msg = await get_msg_sync("error1")
+        await update.message.reply_text(msg.message if msg else "شماره موبایل شما ثبت نشده است.")
+        return
+
     products = await get_all_products_sync()
 
     for product in products:
@@ -69,8 +85,19 @@ async def menu1_handler(update: Update, context: CallbackContext):
             product_images = await sync_to_async(list)(product.images.all())
 
         for i, img in enumerate(product_images):
+            # ✅ Skip broken or missing images
+            if not img.image or not hasattr(img.image, 'url') or not img.image.url:
+                continue
+
             current_caption = caption if i == 0 else None
-            await context.bot.send_photo(chat_id=update.effective_chat.id, photo=img.image.url, caption=current_caption)
+            try:
+                await context.bot.send_photo(
+                    chat_id=update.effective_chat.id,
+                    photo=img.image.url,
+                    caption=current_caption
+                )
+            except Exception as e:
+                print(f"❌ Failed to send image: {img.image.url} — {e}")
 
     back_msg = await get_msg_sync("back_to_menu1")
     reply_markup = ReplyKeyboardMarkup([[KeyboardButton(back_msg.message if back_msg else "🔙 Back")]], resize_keyboard=True)
