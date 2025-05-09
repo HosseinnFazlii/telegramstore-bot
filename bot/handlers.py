@@ -3,6 +3,7 @@ from telegram import Update, ReplyKeyboardMarkup, KeyboardButton
 from telegram.ext import CallbackContext
 from store.models import TelegramUser, Product, PreparedMessage
 from asgiref.sync import sync_to_async
+from django.conf import settings  # ✅ Add this
 
 @sync_to_async
 def get_msg_sync(title):
@@ -85,19 +86,20 @@ async def menu1_handler(update: Update, context: CallbackContext):
             product_images = await sync_to_async(list)(product.images.all())
 
         for i, img in enumerate(product_images):
-            # ✅ Skip broken or missing images
             if not img.image or not hasattr(img.image, 'url') or not img.image.url:
                 continue
+
+            image_url = settings.DOMAIN + img.image.url  # ✅ prepend domain
 
             current_caption = caption if i == 0 else None
             try:
                 await context.bot.send_photo(
                     chat_id=update.effective_chat.id,
-                    photo=img.image.url,
+                    photo=image_url,
                     caption=current_caption
                 )
             except Exception as e:
-                print(f"❌ Failed to send image: {img.image.url} — {e}")
+                print(f"❌ Failed to send image: {image_url} — {e}")
 
     back_msg = await get_msg_sync("back_to_menu1")
     reply_markup = ReplyKeyboardMarkup([[KeyboardButton(back_msg.message if back_msg else "🔙 Back")]], resize_keyboard=True)

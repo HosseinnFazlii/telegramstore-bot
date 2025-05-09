@@ -135,3 +135,5 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 GRAPPELLI_ADMIN_TITLE = "Faramarzi Gold Store"
 
 #test test 
+
+DOMAIN = "https://faramarzi.sooxy.xyz"
