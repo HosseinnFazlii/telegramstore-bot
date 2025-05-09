@@ -8,7 +8,7 @@ from store.models import TelegramUser, Product, PreparedMessage
 from asgiref.sync import sync_to_async
 from django.conf import settings
 
-# Same sync functions
+
 @sync_to_async
 def get_msg_sync(title):
     return PreparedMessage.objects.filter(title__iexact=title).first()
@@ -33,6 +33,7 @@ def user_has_phone_sync(telegram_id):
 @sync_to_async
 def get_product_by_id(product_id):
     return Product.objects.prefetch_related('images').get(id=product_id)
+
 
 async def start_handler(update: Update, context: CallbackContext):
     telegram_id = update.effective_user.id
@@ -61,6 +62,7 @@ async def show_main_menu(update: Update):
         msg = await get_msg_sync("error1")
         await update.message.reply_text(msg.message if msg else "شماره موبایل شما ثبت نشده است.")
         return
+
     btn1 = await get_msg_sync("menue1")
     btn2 = await get_msg_sync("menue2")
     btn3 = await get_msg_sync("menue3")
@@ -74,7 +76,7 @@ async def show_main_menu(update: Update):
     menu_msg = await get_msg_sync("main_menu")
     await update.message.reply_text(menu_msg.message if menu_msg else "Choose from below:", reply_markup=reply_markup)
 
-# ✅ This displays products with image pagination
+
 async def menu1_handler(update: Update, context: CallbackContext):
     telegram_id = update.effective_user.id
     if not await user_has_phone_sync(telegram_id):
@@ -87,59 +89,73 @@ async def menu1_handler(update: Update, context: CallbackContext):
         images = await sync_to_async(list)(product.images.all())
         if not images:
             continue
+
         image = images[0]
         image_url = settings.DOMAIN + image.image.url
-
         caption = f"{product.name}\n{product.description}\n💰 {product.price} تومان\n⚖️ {product.weight} گرم"
 
-        # Inline navigation buttons
-        keyboard = InlineKeyboardMarkup([[
-            InlineKeyboardButton("⏩", callback_data=f"next_{product.id}_1")
-        ]]) if len(images) > 1 else None
+        total = len(images)
+        inline_buttons = [
+            [
+                InlineKeyboardButton("▶️", callback_data=f"next_{product.id}_1")
+            ] if total > 1 else []
+        ]
+
+        back_msg = await get_msg_sync("back_to_menu1")
+        inline_buttons.append([
+            InlineKeyboardButton(back_msg.message if back_msg else "🔙 بازگشت به منو", callback_data="back_to_menu")
+        ])
 
         await context.bot.send_photo(
             chat_id=update.effective_chat.id,
             photo=image_url,
             caption=caption,
-            reply_markup=keyboard
+            reply_markup=InlineKeyboardMarkup(inline_buttons)
         )
 
-    back_msg = await get_msg_sync("back_to_menu1")
-    reply_markup = ReplyKeyboardMarkup([[KeyboardButton(back_msg.message if back_msg else "🔙 Back")]], resize_keyboard=True)
-    await update.message.reply_text(back_msg.message if back_msg else "Back to menu:", reply_markup=reply_markup)
 
-# ✅ Handler for inline navigation
 async def image_slider_callback(update: Update, context: CallbackContext):
     query = update.callback_query
     await query.answer()
+    data = query.data
 
-    data = query.data  # Format: next_{product_id}_{index}
-    if data.startswith("next_") or data.startswith("prev_"):
-        action, product_id, index = data.split("_")
-        index = int(index)
+    if data == "back_to_menu":
+        await show_main_menu(update)
+        return
 
-        product = await get_product_by_id(product_id)
-        images = await sync_to_async(list)(product.images.all())
-        total = len(images)
-        if total == 0:
-            return
+    if not (data.startswith("next_") or data.startswith("prev_")):
+        return
 
-        if action == "next" and index >= total:
-            index = 0
-        elif action == "prev" and index < 0:
-            index = total - 1
+    action, product_id, index = data.split("_")
+    index = int(index)
 
-        image = images[index]
-        image_url = settings.DOMAIN + image.image.url
-        caption = f"{product.name}\n{product.description}\n💰 {product.price} تومان\n⚖️ {product.weight} گرم"
+    product = await get_product_by_id(product_id)
+    images = await sync_to_async(list)(product.images.all())
+    total = len(images)
+    if total == 0:
+        return
 
-        navigation = InlineKeyboardMarkup([[
+    if action == "next":
+        index = 0 if index >= total else index
+    elif action == "prev":
+        index = total - 1 if index < 0 else index
+
+    image = images[index]
+    image_url = settings.DOMAIN + image.image.url
+    caption = f"{product.name}\n{product.description}\n💰 {product.price} تومان\n⚖️ {product.weight} گرم"
+
+    navigation = [
+        [
             InlineKeyboardButton("◀️", callback_data=f"prev_{product.id}_{index - 1}"),
             InlineKeyboardButton(f"{index + 1} / {total}", callback_data="noop"),
             InlineKeyboardButton("▶️", callback_data=f"next_{product.id}_{index + 1}")
-        ]])
+        ],
+        [
+            InlineKeyboardButton("🔙 بازگشت به منو", callback_data="back_to_menu")
+        ]
+    ]
 
-        await query.edit_message_media(
-            media=InputMediaPhoto(media=image_url, caption=caption),
-            reply_markup=navigation
-        )
+    await query.edit_message_media(
+        media=InputMediaPhoto(media=image_url, caption=caption),
+        reply_markup=InlineKeyboardMarkup(navigation)
+    )
