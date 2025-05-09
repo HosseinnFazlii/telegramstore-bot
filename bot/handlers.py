@@ -60,7 +60,8 @@ async def show_main_menu(update: Update):
     telegram_id = update.effective_user.id
     if not await user_has_phone_sync(telegram_id):
         msg = await get_msg_sync("error1")
-        await update.message.reply_text(msg.message if msg else "شماره موبایل شما ثبت نشده است.")
+        target = update.message or update.callback_query.message
+        await target.reply_text(msg.message if msg else "شماره موبایل شما ثبت نشده است.")
         return
 
     btn1 = await get_msg_sync("menue1")
@@ -73,9 +74,10 @@ async def show_main_menu(update: Update):
         KeyboardButton(btn3.message if btn3 else "Menu 3")
     ]]
     reply_markup = ReplyKeyboardMarkup(keyboard, resize_keyboard=True)
-    menu_msg = await get_msg_sync("main_menu")
-    await update.message.reply_text(menu_msg.message if menu_msg else "Choose from below:", reply_markup=reply_markup)
 
+    menu_msg = await get_msg_sync("main_menu")
+    target = update.message or update.callback_query.message
+    await target.reply_text(menu_msg.message if menu_msg else "Choose from below:", reply_markup=reply_markup)
 
 async def menu1_handler(update: Update, context: CallbackContext):
     telegram_id = update.effective_user.id
