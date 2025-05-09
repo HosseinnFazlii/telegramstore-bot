@@ -3,7 +3,7 @@ name: Vitron CI/CD
 on:
   push:
     branches:
-      - develop  # or main if you're deploying from main
+      - main  # or main if you're deploying from main
 
 jobs:
   deploy:
@@ -21,7 +21,7 @@ jobs:
           key: ${{ secrets.SSH_KEY }}
           script: |
             cd /root/Vitron-back
-            git checkout develop
-            git pull origin develop
+            git checkout main
+            git pull origin main
             docker-compose down
             docker-compose up -d --build
