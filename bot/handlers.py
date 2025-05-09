@@ -119,6 +119,8 @@ async def image_slider_callback(update: Update, context: CallbackContext):
     await query.answer()
     data = query.data
 
+    print(f"📩 CALLBACK TRIGGERED: {data}")
+
     if data == "back_to_menu":
         await show_main_menu(update)
         return
@@ -126,36 +128,39 @@ async def image_slider_callback(update: Update, context: CallbackContext):
     if not (data.startswith("next_") or data.startswith("prev_")):
         return
 
-    action, product_id, index = data.split("_")
-    index = int(index)
+    try:
+        action, product_id, index = data.split("_")
+        index = int(index)
 
-    product = await get_product_by_id(product_id)
-    images = await sync_to_async(list)(product.images.all())
-    total = len(images)
-    if total == 0:
-        return
+        product = await get_product_by_id(product_id)
+        images = await sync_to_async(list)(product.images.all())
+        total = len(images)
+        if total == 0:
+            return
 
-    if action == "next":
-        index = 0 if index >= total else index
-    elif action == "prev":
-        index = total - 1 if index < 0 else index
+        if action == "next":
+            index = 0 if index >= total else index
+        elif action == "prev":
+            index = total - 1 if index < 0 else index
 
-    image = images[index]
-    image_url = settings.DOMAIN + image.image.url
-    caption = f"{product.name}\n{product.description}\n💰 {product.price} تومان\n⚖️ {product.weight} گرم"
+        image = images[index]
+        image_url = settings.DOMAIN + image.image.url
+        caption = f"{product.name}\n{product.description}\n💰 {product.price} تومان\n⚖️ {product.weight} گرم"
 
-    navigation = [
-        [
-            InlineKeyboardButton("◀️", callback_data=f"prev_{product.id}_{index - 1}"),
-            InlineKeyboardButton(f"{index + 1} / {total}", callback_data="noop"),
-            InlineKeyboardButton("▶️", callback_data=f"next_{product.id}_{index + 1}")
-        ],
-        [
-            InlineKeyboardButton("🔙 بازگشت به منو", callback_data="back_to_menu")
+        navigation = [
+            [
+                InlineKeyboardButton("◀️", callback_data=f"prev_{product.id}_{index - 1}"),
+                InlineKeyboardButton(f"{index + 1} / {total}", callback_data="noop"),
+                InlineKeyboardButton("▶️", callback_data=f"next_{product.id}_{index + 1}")
+            ],
+            [
+                InlineKeyboardButton("🔙 بازگشت به منو", callback_data="back_to_menu")
+            ]
         ]
-    ]
 
-    await query.edit_message_media(
-        media=InputMediaPhoto(media=image_url, caption=caption),
-        reply_markup=InlineKeyboardMarkup(navigation)
-    )
+        await query.edit_message_media(
+            media=InputMediaPhoto(media=image_url, caption=caption),
+            reply_markup=InlineKeyboardMarkup(navigation)
+        )
+    except Exception as e:
+        print(f"❌ Error during image update: {e}")

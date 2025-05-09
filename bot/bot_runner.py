@@ -2,7 +2,6 @@ import os
 import sys
 import django
 
-# Load Django settings
 sys.path.append("/app")
 os.environ.setdefault("DJANGO_SETTINGS_MODULE", "core.settings")
 django.setup()
