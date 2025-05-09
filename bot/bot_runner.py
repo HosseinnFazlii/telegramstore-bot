@@ -2,7 +2,7 @@ import os
 import sys
 import django
 
-# Ensure Django settings are loaded
+# Load Django settings
 sys.path.append("/app")
 os.environ.setdefault("DJANGO_SETTINGS_MODULE", "core.settings")
 django.setup()
@@ -15,8 +15,10 @@ from telegram.ext import (
 )
 from telegram import Update
 from store.models import TelegramBotToken
-from bot.handlers import start_handler, phone_handler, menu1_handler
 from asgiref.sync import sync_to_async
+
+# ✅ Import handlers here
+from bot.handlers import start_handler, phone_handler, menu1_handler
 
 # Logging setup
 logging.basicConfig(
@@ -28,11 +30,16 @@ logging.basicConfig(
 def get_bot_token():
     return TelegramBotToken.objects.first()
 
-# Catch-all handler for debugging
+# 🔍 Catch-all fallback for testing
 async def debug_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
     msg = update.message.text if update.message else "<no text>"
-    logging.info(f"📩 Received: {msg}")
+    logging.info(f"📩 Received unknown message: {msg}")
     await update.message.reply_text("✅ Bot is alive. You said: " + msg)
+
+# 🔍 TEMP: Debug version of start_handler to test /start
+async def test_start_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    logging.info("🚀 /start command received")
+    await update.message.reply_text("👋 Hello! Bot received /start successfully.")
 
 async def start_bot():
     token_obj = await get_bot_token()
@@ -42,16 +49,15 @@ async def start_bot():
 
     app = ApplicationBuilder().token(token_obj.token).build()
 
-    app.add_handler(CommandHandler("start", start_handler))
+    # ✅ Register handlers
+    app.add_handler(CommandHandler("start", test_start_handler))  # 👈 TEMP: confirm /start
     app.add_handler(MessageHandler(filters.Regex(r'^09\d{9}$'), phone_handler))
     app.add_handler(MessageHandler(filters.Regex(r'^📦.*'), menu1_handler))
-    app.add_handler(MessageHandler(filters.Regex(r'^🔙.*'), start_handler))
+    app.add_handler(MessageHandler(filters.Regex(r'^🔙.*'), test_start_handler))
     app.add_handler(MessageHandler(filters.ALL, debug_handler))
 
-    print("✅ Bot is running...")
-    # app.run_polling() handles initialization, starting, polling, and shutdown.
+    print("✅ Bot is running and polling...")
     await app.run_polling(close_loop=False)
 
-# ✅ Entry point: use existing loop
 if __name__ == "__main__":
     asyncio.run(start_bot())
