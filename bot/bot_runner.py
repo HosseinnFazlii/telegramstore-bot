@@ -19,6 +19,7 @@ from asgiref.sync import sync_to_async
 
 # ✅ Import handlers here
 from bot.handlers import start_handler, phone_handler, menu1_handler,image_slider_callback
+from telegram.ext import CallbackQueryHandler
 
 # Logging setup
 logging.basicConfig(
