@@ -53,12 +53,17 @@ async def run_bot():
     await app.run_polling(close_loop=False)
 
 if __name__ == "__main__":
+    import asyncio
+
     try:
-        asyncio.run(run_bot())
-    except RuntimeError as e:
-        if "event loop is running" in str(e):
-            loop = asyncio.get_event_loop()
+        loop = asyncio.get_event_loop()
+        if loop.is_running():
+            # Already running (e.g., inside a thread or Jupyter/Django)
             loop.create_task(run_bot())
-            loop.run_forever()
         else:
-            raise
+            loop.run_until_complete(run_bot())
+    except RuntimeError as e:
+        # Handles: RuntimeError: There is no current event loop in thread 'MainThread'
+        new_loop = asyncio.new_event_loop()
+        asyncio.set_event_loop(new_loop)
+        new_loop.run_until_complete(run_bot())
