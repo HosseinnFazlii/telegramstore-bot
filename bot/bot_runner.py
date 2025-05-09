@@ -2,20 +2,16 @@ import os
 import sys
 import django
 
-# Load Django settings
 sys.path.append("/app")
 os.environ.setdefault("DJANGO_SETTINGS_MODULE", "core.settings")
 django.setup()
 
 import logging
-import asyncio
 from telegram.ext import (
     ApplicationBuilder, CommandHandler, MessageHandler,
-    CallbackQueryHandler, ContextTypes, filters
+    CallbackQueryHandler, filters
 )
 from store.models import TelegramBotToken
-from asgiref.sync import sync_to_async
-
 from bot.handlers import (
     start_handler, phone_handler, menu1_handler, image_slider_callback
 )
@@ -25,17 +21,9 @@ logging.basicConfig(
     level=logging.INFO
 )
 
-@sync_to_async
-def get_bot_token():
-    return TelegramBotToken.objects.first()
 
-async def debug_handler(update, context):
-    msg = update.message.text if update.message else "<no text>"
-    logging.info(f"📩 DEBUG: Received: '{msg}' from user {update.effective_user.id}")
-    await update.message.reply_text("✅ Bot received your message.")
-
-async def run_bot():
-    token_obj = await get_bot_token()
+def run_bot():
+    token_obj = TelegramBotToken.objects.first()
     if not token_obj:
         print("❌ No Telegram bot token found in the database.")
         return
@@ -50,20 +38,14 @@ async def run_bot():
     app.add_handler(CallbackQueryHandler(image_slider_callback))
 
     logging.info("✅ Telegram Bot is running. Press Ctrl+C to stop.")
-    await app.run_polling(close_loop=False)
+    app.run_polling()  # ✅ NO AWAIT, sync context
+
+
+def debug_handler(update, context):
+    msg = update.message.text if update.message else "<no text>"
+    logging.info(f"📩 DEBUG: Received: '{msg}' from user {update.effective_user.id}")
+    update.message.reply_text("✅ Bot received your message.")
+
 
 if __name__ == "__main__":
-    import asyncio
-
-    try:
-        loop = asyncio.get_event_loop()
-        if loop.is_running():
-            # Already running (e.g., inside a thread or Jupyter/Django)
-            loop.create_task(run_bot())
-        else:
-            loop.run_until_complete(run_bot())
-    except RuntimeError as e:
-        # Handles: RuntimeError: There is no current event loop in thread 'MainThread'
-        new_loop = asyncio.new_event_loop()
-        asyncio.set_event_loop(new_loop)
-        new_loop.run_until_complete(run_bot())
+    run_bot()
