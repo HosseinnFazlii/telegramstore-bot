@@ -1,0 +1,27 @@
+name: Vitron CI/CD
+
+on:
+  push:
+    branches:
+      - develop  # or main if you're deploying from main
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Clone Repo
+        uses: actions/checkout@v3
+
+      - name: Connect to SSH and Deploy
+        uses: appleboy/ssh-action@v0.1.10
+        with:
+          host: ${{ secrets.SSH_HOST }}
+          username: ${{ secrets.SSH_USER }}
+          key: ${{ secrets.SSH_KEY }}
+          script: |
+            cd /root/Vitron-back
+            git checkout develop
+            git pull origin develop
+            docker-compose down
+            docker-compose up -d --build
