@@ -20,7 +20,7 @@ jobs:
           username: ${{ secrets.SSH_USER }}
           key: ${{ secrets.SSH_KEY }}
           script: |
-            cd /root/Vitron-back
+            cd /root/telegramstore-bot
             git checkout main
             git pull origin main
             docker-compose down
