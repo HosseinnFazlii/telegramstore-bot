@@ -18,7 +18,7 @@ from store.models import TelegramBotToken
 from asgiref.sync import sync_to_async
 
 # ✅ Import handlers here
-from bot.handlers import start_handler, phone_handler, menu1_handler
+from bot.handlers import start_handler, phone_handler, menu1_handler,image_slider_callback
 
 # Logging setup
 logging.basicConfig(
@@ -55,6 +55,7 @@ async def start_bot():
     app.add_handler(MessageHandler(filters.Regex(r'^📦.*'), menu1_handler))
     app.add_handler(MessageHandler(filters.Regex(r'^🔙.*'), test_start_handler))
     app.add_handler(MessageHandler(filters.ALL, debug_handler))
+    app.add_handler(CallbackQueryHandler(image_slider_callback))
 
     print("✅ Bot is running and polling...")
     await app.run_polling(close_loop=False)
