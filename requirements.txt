@@ -16,3 +16,7 @@ phpserialize
 django-cors-headers
 django-grappelli
 python-telegram-bot==20.6
+gunicorn
+channels
+channels_redis
+uvicorn[standard]
