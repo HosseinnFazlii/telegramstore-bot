@@ -2,6 +2,7 @@ import os
 import sys
 import django
 
+# Load Django settings
 sys.path.append("/app")
 os.environ.setdefault("DJANGO_SETTINGS_MODULE", "core.settings")
 django.setup()
@@ -52,4 +53,12 @@ async def run_bot():
     await app.run_polling(close_loop=False)
 
 if __name__ == "__main__":
-    asyncio.run(run_bot())
+    try:
+        asyncio.run(run_bot())
+    except RuntimeError as e:
+        if "event loop is running" in str(e):
+            loop = asyncio.get_event_loop()
+            loop.create_task(run_bot())
+            loop.run_forever()
+        else:
+            raise
