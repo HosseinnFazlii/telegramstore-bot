@@ -20,3 +20,5 @@ gunicorn
 channels
 channels_redis
 uvicorn[standard]
+bs4
+pytz
