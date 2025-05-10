@@ -7,3 +7,4 @@ class GoldPriceAdmin(admin.ModelAdmin):
     list_filter = ("title", "recorded_at")
     search_fields = ("title", "price")
     ordering = ("-recorded_at",)
+    actions = ["delete_selected"]  # ✅ Enable delete in list view

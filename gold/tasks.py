@@ -42,13 +42,14 @@ def fetch_and_save_gold_prices():
         now_time = timezone.now()
 
         for title, new_price in prices.items():
-            # Check if a recent price (within 5 minutes) already exists
-            recent_time = now_time - timedelta(minutes=5)
-            recent_entry = GoldPrice.objects.filter(
-                title=title, recorded_at__gte=recent_time
-            ).order_by('-recorded_at').first()
+            # ✅ Prevent duplicate saves within 30 minutes for same title/price
+            exists = GoldPrice.objects.filter(
+                title=title,
+                price=new_price,
+                recorded_at__gte=now_time - timedelta(minutes=30)
+            ).exists()
 
-            if not recent_entry or recent_entry.price != new_price:
+            if not exists:
                 changed_prices[title] = new_price
                 GoldPrice.objects.create(
                     title=title,
@@ -56,7 +57,7 @@ def fetch_and_save_gold_prices():
                     recorded_at=now_time
                 )
 
-        # ✅ Update products if "هرگرم طلای 18 عیار" has changed
+        # ✅ If 18-carat gold changed → update all products
         if "هرگرم طلای 18 عیار" in changed_prices:
             try:
                 raw_price = changed_prices["هرگرم طلای 18 عیار"].replace(",", "").strip()
