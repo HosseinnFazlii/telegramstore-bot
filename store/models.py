@@ -6,6 +6,7 @@ class Product(models.Model):
     name = models.CharField(max_length=255)
     description = models.TextField()
     price = models.DecimalField(max_digits=12, decimal_places=2)
+    coefficient=models.DecimalField(max_digits=12, decimal_places=2)
     weight = models.DecimalField(max_digits=6, decimal_places=2, help_text="Weight in grams")
 
     def __str__(self):

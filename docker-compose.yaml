@@ -49,6 +49,30 @@ services:
       - ./ssl/cert.crt:/etc/nginx/ssl/cert.crt:ro
       - ./ssl/private.key:/etc/nginx/ssl/private.key:ro
 
+  celery_worker:
+    build: .
+    command: celery -A core worker --loglevel=info
+    volumes:
+      - .:/app
+    depends_on:
+      - redis
+    environment:
+      - CELERY_BROKER_URL=redis://redis:6379/0
+      - CELERY_RESULT_BACKEND=redis://redis:6379/0
+
+  celery_beat:
+    build: .
+    command: celery -A core beat --loglevel=info
+    volumes:
+      - .:/app
+    depends_on:
+      - redis
+    environment:
+      - CELERY_BROKER_URL=redis://redis:6379/0
+      - CELERY_RESULT_BACKEND=redis://redis:6379/0
+
+
+
 volumes:
   postgres_data:
   static_volume:
