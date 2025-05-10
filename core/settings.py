@@ -135,6 +135,7 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 # settings.py
 GRAPPELLI_ADMIN_TITLE = "Faramarzi Gold Store"
 GRAPPELLI_ADMIN_ACTIONS = True
+ADMIN_ACTIONS = True
 
 #test test 
 
