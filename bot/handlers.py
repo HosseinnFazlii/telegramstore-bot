@@ -5,39 +5,57 @@ from telegram import (
 )
 from telegram.ext import CallbackContext
 from store.models import TelegramUser, Product, PreparedMessage
+from gold.models import GoldPrice, Coin
 from asgiref.sync import sync_to_async
 from django.conf import settings
 from django.utils.timezone import now
 import pytz
 
+
 def get_tehran_time_str():
     tehran_tz = pytz.timezone("Asia/Tehran")
     return now().astimezone(tehran_tz).strftime("%Y/%m/%d %H:%M")
+
 
 @sync_to_async
 def get_msg_sync(title):
     return PreparedMessage.objects.filter(title__iexact=title).first()
 
+
 @sync_to_async
 def get_or_create_user_sync(telegram_id):
     return TelegramUser.objects.get_or_create(telegram_id=telegram_id)
+
 
 @sync_to_async
 def update_user_phone_sync(telegram_id, phone):
     TelegramUser.objects.filter(telegram_id=telegram_id).update(phone_number=phone)
 
+
 @sync_to_async
 def get_all_products_sync():
     return list(Product.objects.prefetch_related('images').all())
+
 
 @sync_to_async
 def user_has_phone_sync(telegram_id):
     user = TelegramUser.objects.filter(telegram_id=telegram_id, phone_number__isnull=False).first()
     return bool(user)
 
+
 @sync_to_async
 def get_product_by_id(product_id):
     return Product.objects.prefetch_related('images').get(id=product_id)
+
+
+@sync_to_async
+def get_all_coins():
+    return list(Coin.objects.all())
+
+
+@sync_to_async
+def get_all_gold_prices():
+    return list(GoldPrice.objects.all())
 
 
 async def start_handler(update: Update, context: CallbackContext):
@@ -50,6 +68,7 @@ async def start_handler(update: Update, context: CallbackContext):
         if msg:
             await update.message.reply_text(msg.message)
 
+
 async def phone_handler(update: Update, context: CallbackContext):
     phone = update.message.text.strip()
     if not re.match(r'^09\d{9}$', phone):
@@ -60,6 +79,7 @@ async def phone_handler(update: Update, context: CallbackContext):
     telegram_id = update.effective_user.id
     await update_user_phone_sync(telegram_id=telegram_id, phone=phone)
     await show_main_menu(update)
+
 
 async def show_main_menu(update: Update):
     telegram_id = update.effective_user.id
@@ -84,6 +104,7 @@ async def show_main_menu(update: Update):
     target = update.message or update.callback_query.message
     await target.reply_text(menu_msg.message if menu_msg else "Choose from below:", reply_markup=reply_markup)
 
+
 async def menu1_handler(update: Update, context: CallbackContext):
     telegram_id = update.effective_user.id
     if not await user_has_phone_sync(telegram_id):
@@ -104,7 +125,7 @@ async def menu1_handler(update: Update, context: CallbackContext):
             f"💰 {product.price} تومان\n"
             f"⚖️ {product.weight} گرم\n\n"
             f"🕰 زمان: {get_tehran_time_str()}"
-)
+        )
 
         total = len(images)
         inline_buttons = [
@@ -126,12 +147,42 @@ async def menu1_handler(update: Update, context: CallbackContext):
         )
 
 
+async def menu2_handler(update: Update, context: CallbackContext):
+    btn1 = await get_msg_sync("coin1")
+    btn2 = await get_msg_sync("coin2")
+    keyboard = [
+        [InlineKeyboardButton(btn1.message if btn1 else "Coin 1", callback_data="coin1")],
+        [InlineKeyboardButton(btn2.message if btn2 else "Coin 2", callback_data="coin2")]
+    ]
+    await update.message.reply_text("لطفاً انتخاب کنید:", reply_markup=InlineKeyboardMarkup(keyboard))
+
+
+async def coin_buttons_callback(update: Update, context: CallbackContext):
+    query = update.callback_query
+    await query.answer()
+
+    if query.data == "coin1":
+        coins = await get_all_coins()
+        message = "📀 قیمت سکه‌ها:\n\n"
+        for coin in coins:
+            message += f"{coin.title} – {coin.description}\n💰 {coin.price} تومان\n⚖️ {coin.weight} گرم\n\n"
+        await query.message.edit_text(message)
+
+    elif query.data == "coin2":
+        items = await get_all_gold_prices()
+        message = "🪙 قیمت طلا:\n\n"
+        for item in items:
+            message += f"{item.description}:\n💰 {item.price} تومان\n\n"
+        await query.message.edit_text(message)
+
+    elif query.data == "back_to_menu":
+        await show_main_menu(update)
+
+
 async def image_slider_callback(update: Update, context: CallbackContext):
     query = update.callback_query
     await query.answer()
     data = query.data
-
-    print(f"📩 CALLBACK TRIGGERED: {data}")
 
     if data == "back_to_menu":
         await show_main_menu(update)
