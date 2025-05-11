@@ -4,7 +4,6 @@ from decimal import Decimal, InvalidOperation
 from celery import shared_task
 from bs4 import BeautifulSoup
 from django.utils import timezone
-from datetime import timedelta
 
 from .models import GoldPrice
 from store.models import Product
@@ -12,6 +11,7 @@ from store.models import Product
 
 def extract_gold_prices(html):
     soup = BeautifulSoup(html, "html.parser")
+    # Persian display name → HTML ID
     target_titles = {
         "هرگرم طلای 18 عیار": "price-5",
         "هرگرم(طلای آب شده18عیار)": "price-6",
@@ -21,10 +21,14 @@ def extract_gold_prices(html):
     }
 
     prices = {}
-    for title, price_id in target_titles.items():
+    for persian_title, price_id in target_titles.items():
         price_tag = soup.find("div", id=price_id) or soup.find("span", id=price_id)
         if price_tag:
-            prices[title] = price_tag.get_text(strip=True)
+            prices[price_id] = {
+                "price": price_tag.get_text(strip=True),
+                "description": persian_title
+            }
+
     return prices
 
 
@@ -37,30 +41,27 @@ def fetch_and_save_gold_prices():
             logging.error(f"Error fetching gold prices: HTTP {response.status_code}")
             return
 
-        prices = extract_gold_prices(response.text)
+        extracted = extract_gold_prices(response.text)
         changed_prices = {}
-        now_time = timezone.now()
 
-        for title, new_price in prices.items():
-            # ✅ Prevent duplicate saves within 30 minutes for same title/price
-            exists = GoldPrice.objects.filter(
-                title=title,
-                price=new_price,
-                recorded_at__gte=now_time - timedelta(minutes=30)
-            ).exists()
+        for price_id, data in extracted.items():
+            new_price = data["price"]
+            description = data["description"]
 
-            if not exists:
-                changed_prices[title] = new_price
+            last_entry = GoldPrice.objects.filter(title=price_id).order_by('-recorded_at').first()
+            if not last_entry or last_entry.price != new_price:
                 GoldPrice.objects.create(
-                    title=title,
+                    title=price_id,
                     price=new_price,
-                    recorded_at=now_time
+                    description=description,
+                    recorded_at=timezone.now()
                 )
+                changed_prices[price_id] = new_price
 
-        # ✅ If 18-carat gold changed → update all products
-        if "هرگرم طلای 18 عیار" in changed_prices:
+        # ✅ Update products only if price-5 (18K gold) changed
+        if "price-5" in changed_prices:
             try:
-                raw_price = changed_prices["هرگرم طلای 18 عیار"].replace(",", "").strip()
+                raw_price = changed_prices["price-5"].replace(",", "").strip()
                 base_price = Decimal(raw_price)
 
                 for product in Product.objects.all():
