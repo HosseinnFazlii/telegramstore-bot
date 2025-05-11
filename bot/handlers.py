@@ -162,21 +162,26 @@ async def menu2_handler(update: Update, context: CallbackContext):
 
 
 
-async def coin1_handler(update: Update, context: CallbackContext):
-    coins = await get_all_coins()
-    message = "📀 قیمت سکه‌ها:\n\n"
-    for coin in coins:
-        message += f"{coin.title} – {coin.description}\n💰 {coin.price} تومان\n⚖️ {coin.weight} گرم\n\n"
-    await update.message.reply_text(message)
+async def callback_router(update: Update, context: CallbackContext):
+    query = update.callback_query
+    data = query.data
 
+    if data == "coin1":
+        coins = await get_all_coins()
+        message = "📀 قیمت سکه‌ها:\n\n"
+        for coin in coins:
+            message += f"{coin.title} – {coin.description}\n💰 {coin.price} تومان\n⚖️ {coin.weight} گرم\n\n"
+        await query.message.edit_text(message)
 
-async def coin2_handler(update: Update, context: CallbackContext):
-    items = await get_all_gold_prices()
-    message = "🪙 قیمت طلا:\n\n"
-    for item in items:
-        message += f"{item.description}:\n💰 {item.price} تومان\n\n"
-    await update.message.reply_text(message)
+    elif data == "coin2":
+        items = await get_all_gold_prices()
+        message = "🪙 قیمت طلا:\n\n"
+        for item in items:
+            message += f"{item.description}:\n💰 {item.price} تومان\n\n"
+        await query.message.edit_text(message)
 
+    elif data == "back_to_menu":
+        await show_main_menu(update)
 
 async def image_slider_callback(update: Update, context: CallbackContext):
     query = update.callback_query
