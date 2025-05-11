@@ -22,4 +22,5 @@ channels_redis
 uvicorn[standard]
 bs4
 pytz
+django-jet-reboot
 django-jet
