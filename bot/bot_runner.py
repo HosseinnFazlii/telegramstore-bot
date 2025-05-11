@@ -9,7 +9,7 @@ django.setup()
 import logging
 from telegram.ext import (
     ApplicationBuilder, CommandHandler, MessageHandler,
-    CallbackQueryHandler, filters
+    CallbackQueryHandler, filters, ContextTypes
 )
 from store.models import TelegramBotToken
 from bot.handlers import (
@@ -18,7 +18,7 @@ from bot.handlers import (
     menu1_handler,
     menu2_handler,
     image_slider_callback,
-    coin_buttons_callback
+      # ✅ CORRECT IMPORT
 )
 
 logging.basicConfig(
@@ -40,18 +40,25 @@ def run_bot():
     app.add_handler(MessageHandler(filters.Regex(r'^📦.*'), menu1_handler))
     app.add_handler(MessageHandler(filters.Regex(r'^💰.*'), menu2_handler))
     app.add_handler(MessageHandler(filters.Regex(r'^🔙.*'), start_handler))
-    app.add_handler(CallbackQueryHandler(coin_buttons_callback))
-    app.add_handler(CallbackQueryHandler(image_slider_callback))
+    app.add_handler(CallbackQueryHandler(callback_router))  # ✅ Unified router
     app.add_handler(MessageHandler(filters.ALL, debug_handler))
 
     logging.info("✅ Telegram Bot is running. Press Ctrl+C to stop.")
     app.run_polling()
 
 
-def debug_handler(update, context):
+async def callback_router(update, context):
+    data = update.callback_query.data
+    if data in ("coin1", "coin2", "back_to_menu"):
+        await menu2_handler(update, context)
+    else:
+        await image_slider_callback(update, context)
+
+
+async def debug_handler(update, context: ContextTypes.DEFAULT_TYPE):
     msg = update.message.text if update.message else "<no text>"
     logging.info(f"📩 DEBUG: Received: '{msg}' from user {update.effective_user.id}")
-    update.message.reply_text("✅ Bot received your message.")
+    await update.message.reply_text("✅ Bot received your message.")
 
 
 if __name__ == "__main__":
