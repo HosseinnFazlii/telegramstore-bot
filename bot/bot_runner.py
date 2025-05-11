@@ -13,7 +13,8 @@ from telegram.ext import (
 )
 from store.models import TelegramBotToken
 from bot.handlers import (
-    start_handler, phone_handler, menu1_handler, image_slider_callback
+    start_handler, phone_handler, menu1_handler, image_slider_callback,
+    menu2_handler, coin1_handler, coin2_handler
 )
 
 logging.basicConfig(
@@ -33,12 +34,15 @@ def run_bot():
     app.add_handler(CommandHandler("start", start_handler))
     app.add_handler(MessageHandler(filters.Regex(r'^09\d{9}$'), phone_handler))
     app.add_handler(MessageHandler(filters.Regex(r'^📦.*'), menu1_handler))
+    app.add_handler(MessageHandler(filters.Regex(r'^💰.*'), menu2_handler))
+    app.add_handler(MessageHandler(filters.Regex(r'^🪙.*'), coin1_handler))
+    app.add_handler(MessageHandler(filters.Regex(r'^🏺.*'), coin2_handler))
     app.add_handler(MessageHandler(filters.Regex(r'^🔙.*'), start_handler))
     app.add_handler(MessageHandler(filters.ALL, debug_handler))
     app.add_handler(CallbackQueryHandler(image_slider_callback))
 
     logging.info("✅ Telegram Bot is running. Press Ctrl+C to stop.")
-    app.run_polling()  # ✅ NO AWAIT, sync context
+    app.run_polling()
 
 
 def debug_handler(update, context):

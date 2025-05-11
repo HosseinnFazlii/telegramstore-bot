@@ -5,7 +5,7 @@ from celery import shared_task
 from bs4 import BeautifulSoup
 from django.utils import timezone
 
-from .models import GoldPrice
+from .models import GoldPrice, Coin  # ✅ Include Coin model
 from store.models import Product
 
 # Mapping Persian titles to short internal keys
@@ -62,17 +62,27 @@ def fetch_and_save_gold_prices():
                     )
                 changed_prices[title] = new_price
 
-        # ✅ If price-5 (18-carat gold) changed → update products
+        # ✅ If price-5 (18-carat gold) changed → update product and coin prices
         if "price-5" in changed_prices:
             try:
-                base_price = Decimal(changed_prices["price-5"].replace(",", ""))
+                price5 = Decimal(changed_prices["price-5"].replace(",", "").strip())
+
+                # Update product prices
                 for product in Product.objects.all():
-                    base = base_price * product.weight
+                    base = price5 * product.weight
                     markup = base * (product.coefficient / Decimal("100"))
                     product.price = base + markup
                     product.save()
+
+                # Update coin prices
+                for coin in Coin.objects.all():
+                    base = price5 * coin.weight
+                    markup = base * Decimal("0.07")  # 7%
+                    coin.price = base + markup + Decimal("15000")
+                    coin.save()
+
             except (InvalidOperation, Exception) as e:
-                logging.error(f"❌ Failed to update product prices: {e}")
+                logging.error(f"❌ Failed to update product/coin prices: {e}")
 
     except Exception as e:
         logging.error(f"❌ Exception in fetch_and_save_gold_prices: {e}")
