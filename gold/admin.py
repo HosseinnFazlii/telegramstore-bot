@@ -1,5 +1,5 @@
 from django.contrib import admin
-from .models import GoldPrice
+from .models import GoldPrice,Coin
 
 @admin.register(GoldPrice)
 class GoldPriceAdmin(admin.ModelAdmin):
@@ -20,3 +20,11 @@ class GoldPriceAdmin(admin.ModelAdmin):
 
     def has_add_permission(self, request):
         return True
+
+
+
+@admin.register(Coin)
+class CoinAdmin(admin.ModelAdmin):
+    list_display = ("title", "price", "weight", "updated_at")
+    search_fields = ("title",)
+    ordering = ("-updated_at",)
