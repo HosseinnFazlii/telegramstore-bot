@@ -148,40 +148,41 @@ async def menu1_handler(update: Update, context: CallbackContext):
 
 
 async def menu2_handler(update: Update, context: CallbackContext):
-    btn1 = await get_msg_sync("coin1")
-    btn2 = await get_msg_sync("coin2")
+    btn1 = await get_msg_sync("coin1")  # Persian label: سکه پارسیان
+    btn2 = await get_msg_sync("coin2")  # Persian label: طلا و سکه
 
     keyboard = [
-        [InlineKeyboardButton(btn1.message if btn1 else "Coin 1", callback_data="coin1")],
-        [InlineKeyboardButton(btn2.message if btn2 else "Coin 2", callback_data="coin2")],
+        [InlineKeyboardButton(btn1.message if btn1 else "سکه پارسیان", callback_data="coin1")],
+        [InlineKeyboardButton(btn2.message if btn2 else "طلا و سکه", callback_data="coin2")],
         [InlineKeyboardButton("🔙 بازگشت به منو", callback_data="back_to_menu")]
     ]
-
-    target = update.message or update.callback_query.message
-    await target.reply_text("لطفاً انتخاب کنید:", reply_markup=InlineKeyboardMarkup(keyboard))
+    await update.message.reply_text("لطفاً انتخاب کنید:", reply_markup=InlineKeyboardMarkup(keyboard))
 
 
 
-async def callback_router(update: Update, context: CallbackContext):
+async def coin1_callback(update: Update, context: CallbackContext):
     query = update.callback_query
-    data = query.data
+    await query.answer()
+    coins = await get_all_coins()
+    message = "📀 قیمت سکه‌ها:\n\n"
+    for coin in coins:
+        message += f"{coin.title} – {coin.description}\n💰 {coin.price} تومان\n⚖️ {coin.weight} گرم\n\n"
+    await query.message.edit_text(message)
 
-    if data == "coin1":
-        coins = await get_all_coins()
-        message = "📀 قیمت سکه‌ها:\n\n"
-        for coin in coins:
-            message += f"{coin.title} – {coin.description}\n💰 {coin.price} تومان\n⚖️ {coin.weight} گرم\n\n"
-        await query.message.edit_text(message)
 
-    elif data == "coin2":
-        items = await get_all_gold_prices()
-        message = "🪙 قیمت طلا:\n\n"
-        for item in items:
-            message += f"{item.description}:\n💰 {item.price} تومان\n\n"
-        await query.message.edit_text(message)
+async def coin2_callback(update: Update, context: CallbackContext):
+    query = update.callback_query
+    await query.answer()
+    items = await get_all_gold_prices()
+    message = "🪙 قیمت طلا:\n\n"
+    for item in items:
+        message += f"{item.description}:\n💰 {item.price} تومان\n\n"
+    await query.message.edit_text(message)
 
-    elif data == "back_to_menu":
-        await show_main_menu(update)
+
+async def back_to_menu_callback(update: Update, context: CallbackContext):
+    await update.callback_query.answer()
+    await show_main_menu(update)
 
 async def image_slider_callback(update: Update, context: CallbackContext):
     query = update.callback_query
