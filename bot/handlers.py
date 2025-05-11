@@ -7,7 +7,12 @@ from telegram.ext import CallbackContext
 from store.models import TelegramUser, Product, PreparedMessage
 from asgiref.sync import sync_to_async
 from django.conf import settings
+from django.utils.timezone import now
+import pytz
 
+def get_tehran_time_str():
+    tehran_tz = pytz.timezone("Asia/Tehran")
+    return now().astimezone(tehran_tz).strftime("%Y/%m/%d %H:%M")
 
 @sync_to_async
 def get_msg_sync(title):
@@ -94,7 +99,12 @@ async def menu1_handler(update: Update, context: CallbackContext):
 
         image = images[0]
         image_url = settings.DOMAIN + image.image.url
-        caption = f"{product.name}\n{product.description}\n💰 {product.price} تومان\n⚖️ {product.weight} گرم"
+        caption = (
+            f"{product.name}\n{product.description}\n"
+            f"💰 {product.price} تومان\n"
+            f"⚖️ {product.weight} گرم\n\n"
+            f"🕰 زمان: {get_tehran_time_str()}"
+)
 
         total = len(images)
         inline_buttons = [
