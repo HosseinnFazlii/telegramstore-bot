@@ -38,7 +38,7 @@ def run_bot():
     app.add_handler(CommandHandler("start", start_handler))
     app.add_handler(MessageHandler(filters.Regex(r'^09\d{9}$'), phone_handler))
     app.add_handler(MessageHandler(filters.Regex(r'^📦.*'), menu1_handler))
-    app.add_handler(MessageHandler(filters.Regex(r'^💰.*'), menu2_handler))
+    app.add_handler(MessageHandler(filters.Regex(r'^💰'), menu2_handler))
     app.add_handler(MessageHandler(filters.Regex(r'^🔙.*'), start_handler))
     app.add_handler(CallbackQueryHandler(callback_router))  # ✅ Unified router
     app.add_handler(MessageHandler(filters.ALL, debug_handler))
