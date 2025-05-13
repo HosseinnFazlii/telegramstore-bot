@@ -11,6 +11,8 @@ from django.conf import settings
 from django.utils.timezone import now
 import pytz
 
+def format_price(amount):
+    return f"{int(amount):,}".replace(",", ",")
 
 def get_tehran_time_str():
     tehran_tz = pytz.timezone("Asia/Tehran")
@@ -121,11 +123,11 @@ async def menu1_handler(update: Update, context: CallbackContext):
         image = images[0]
         image_url = settings.DOMAIN + image.image.url
         caption = (
-            f"{product.name}\n{product.description}\n"
-            f"💰 {product.price} تومان\n"
-            f"⚖️ {product.weight} گرم\n\n"
-            f"🕰 زمان: {get_tehran_time_str()}"
-        )
+                f"*{product.name}*\n{product.description}\n"
+                f"`💰 {format_price(product.price)} تومان`\n"
+                f"⚖️ {product.weight} گرم\n\n"
+                f"🕰 زمان: {get_tehran_time_str()}"
+                )
 
         total = len(images)
         inline_buttons = [
@@ -144,6 +146,7 @@ async def menu1_handler(update: Update, context: CallbackContext):
             photo=image_url,
             caption=caption,
             reply_markup=InlineKeyboardMarkup(inline_buttons)
+            parse_mode="Markdown"
         )
 
 
@@ -191,8 +194,12 @@ async def coin_detail_handler(update: Update, context: CallbackContext):
     coin = await get_coin_by_title(text)
 
     if coin:
-        msg = f"{coin.title} – {coin.description}\n💰 {coin.price} تومان\n⚖️ {coin.weight} گرم"
-        await update.message.reply_text(msg)
+        msg = (
+            f"*{coin.title}* – {coin.description}\n"
+            f"`💰 {format_price(coin.price)} تومان`\n"
+            f"⚖️ {coin.weight} گرم"
+        )
+        await update.message.reply_text(msg, parse_mode="Markdown")
 
 
 
