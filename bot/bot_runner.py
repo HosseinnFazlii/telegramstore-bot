@@ -21,6 +21,7 @@ from bot.handlers import (
     coin2_callback,
     back_to_menu_callback,
     image_slider_callback,
+    coin_detail_handler,
 )
 
 logging.basicConfig(
@@ -47,6 +48,7 @@ def run_bot():
 
     # Inline button handlers
     app.add_handler(CallbackQueryHandler(coin1_callback, pattern="^coin1$"))
+    app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, coin_detail_handler))
     app.add_handler(CallbackQueryHandler(coin2_callback, pattern="^coin2$"))
     app.add_handler(CallbackQueryHandler(back_to_menu_callback, pattern="^back_to_menu$"))
 
