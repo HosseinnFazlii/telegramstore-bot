@@ -163,11 +163,38 @@ async def menu2_handler(update: Update, context: CallbackContext):
 async def coin1_callback(update: Update, context: CallbackContext):
     query = update.callback_query
     await query.answer()
+
     coins = await get_all_coins()
-    message = "📀 قیمت سکه‌ها:\n\n"
+    keyboard = []
     for coin in coins:
-        message += f"{coin.title} – {coin.description}\n💰 {coin.price} تومان\n⚖️ {coin.weight} گرم\n\n"
+        keyboard.append([InlineKeyboardButton(coin.title, callback_data=f"coininfo_{coin.id}")])
+
+    keyboard.append([InlineKeyboardButton("🔙 بازگشت به منو", callback_data="back_to_menu")])
+
+    await query.message.edit_text("یکی از سکه‌ها را انتخاب کنید:", reply_markup=InlineKeyboardMarkup(keyboard))
+
+@sync_to_async
+def get_coin_by_id(coin_id):
+    return Coin.objects.filter(id=coin_id).first()
+
+async def coin_info_callback(update: Update, context: CallbackContext):
+    query = update.callback_query
+    await query.answer()
+
+    coin_id = query.data.split("_")[1]
+    coin = await get_coin_by_id(coin_id)
+    if not coin:
+        await query.message.edit_text("❌ سکه یافت نشد.")
+        return
+
+    message = (
+        f"{coin.title} – {coin.description}\n"
+        f"💰 {coin.price} تومان\n"
+        f"⚖️ {coin.weight} گرم"
+    )
     await query.message.edit_text(message)
+
+
 
 
 async def coin2_callback(update: Update, context: CallbackContext):

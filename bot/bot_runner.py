@@ -17,10 +17,10 @@ from bot.handlers import (
     phone_handler,
     menu1_handler,
     menu2_handler,
-    image_slider_callback,
     coin1_callback,
     coin2_callback,
     back_to_menu_callback,
+    image_slider_callback,
 )
 
 logging.basicConfig(
@@ -36,26 +36,30 @@ def run_bot():
 
     app = ApplicationBuilder().token(token_obj.token).build()
 
-    # Command and message handlers
+    # Start and phone handlers
     app.add_handler(CommandHandler("start", start_handler))
     app.add_handler(MessageHandler(filters.Regex(r'^09\d{9}$'), phone_handler))
+
+    # Menu handlers
     app.add_handler(MessageHandler(filters.Regex(r'^📦.*'), menu1_handler))
-    app.add_handler(MessageHandler(filters.Regex(r'^💰'), menu2_handler))
+    app.add_handler(MessageHandler(filters.Regex(r'^💰.*'), menu2_handler))
     app.add_handler(MessageHandler(filters.Regex(r'^🔙.*'), start_handler))
-    
-    # Callback handlers
+
+    # Inline button handlers
     app.add_handler(CallbackQueryHandler(coin1_callback, pattern="^coin1$"))
     app.add_handler(CallbackQueryHandler(coin2_callback, pattern="^coin2$"))
     app.add_handler(CallbackQueryHandler(back_to_menu_callback, pattern="^back_to_menu$"))
+
+    # Fallback for slider (uses dynamic callback data like next_{id}_{index})
     app.add_handler(CallbackQueryHandler(image_slider_callback))
 
-    # Catch-all debug
+    # Debug fallback
     app.add_handler(MessageHandler(filters.ALL, debug_handler))
 
     logging.info("✅ Telegram Bot is running. Press Ctrl+C to stop.")
     app.run_polling()
 
-# ✅ Fallback for unknown messages
+
 async def debug_handler(update, context: ContextTypes.DEFAULT_TYPE):
     msg = update.message.text if update.message else "<no text>"
     logging.info(f"📩 DEBUG: Received: '{msg}' from user {update.effective_user.id}")
