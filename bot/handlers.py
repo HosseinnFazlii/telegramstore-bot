@@ -145,7 +145,7 @@ async def menu1_handler(update: Update, context: CallbackContext):
             chat_id=update.effective_chat.id,
             photo=image_url,
             caption=caption,
-            reply_markup=InlineKeyboardMarkup(inline_buttons)
+            reply_markup=InlineKeyboardMarkup(inline_buttons),
             parse_mode="Markdown"
         )
 
