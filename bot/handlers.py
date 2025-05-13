@@ -169,7 +169,10 @@ async def coin1_callback(update: Update, context: CallbackContext):
     await query.answer()
 
     coin_titles = await get_coin_titles()
-    keyboard = [[KeyboardButton(title)] for title in coin_titles]  # one button per row
+
+    keyboard = [[KeyboardButton(title)] for title in coin_titles]
+    keyboard.append([KeyboardButton("🔙 بازگشت به منوی قبل")])  # Add back button
+
     reply_markup = ReplyKeyboardMarkup(keyboard, resize_keyboard=True)
 
     await query.message.reply_text("یکی از سکه‌ها را انتخاب کنید:", reply_markup=reply_markup)
