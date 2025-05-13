@@ -195,9 +195,9 @@ async def coin_detail_handler(update: Update, context: CallbackContext):
 
     if coin:
         msg = (
-            f"*{coin.title}*\n"
-            f"`💰 {format_price(coin.price)} تومان`\n"
-            f"⚖️ {coin.weight} گرم"
+            f"*🪙{coin.title}*\n"
+            f"`💰{format_price(coin.price)} تومان`\n"
+            f"⚖️{coin.weight} گرم"
         )
         await update.message.reply_text(msg, parse_mode="Markdown")
 
