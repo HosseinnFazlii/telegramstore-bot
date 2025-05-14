@@ -219,6 +219,14 @@ async def back_to_menu_callback(update: Update, context: CallbackContext):
     await update.callback_query.answer()
     await show_main_menu(update)
 
+async def menu3_handler(update: Update, context: CallbackContext):
+    msg = await get_msg_sync("contactus")
+    if msg:
+        await update.message.reply_text(msg.message)
+    else:
+        await update.message.reply_text("اطلاعات تماس موجود نیست.")
+
+
 async def image_slider_callback(update: Update, context: CallbackContext):
     query = update.callback_query
     await query.answer()

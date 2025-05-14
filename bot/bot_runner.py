@@ -22,6 +22,7 @@ from bot.handlers import (
     back_to_menu_callback,
     image_slider_callback,
     coin_detail_handler,
+    menu3_handler, 
 )
 
 logging.basicConfig(
@@ -45,6 +46,7 @@ def run_bot():
     app.add_handler(MessageHandler(filters.Regex(r'^📦.*'), menu1_handler))
     app.add_handler(MessageHandler(filters.Regex(r'^💰.*'), menu2_handler))
     app.add_handler(MessageHandler(filters.Regex(r'^🔙.*'), start_handler))
+    app.add_handler(MessageHandler(filters.Regex(r'^📞.*'), menu3_handler))
 
     # Inline button handlers
     app.add_handler(CallbackQueryHandler(coin1_callback, pattern="^coin1$"))
