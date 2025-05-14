@@ -198,7 +198,7 @@ async def coin_detail_handler(update: Update, context: CallbackContext):
             f"*🪙{coin.title}*\n"
             f"`💰{format_price(coin.price)} تومان`\n"
             f"⚖️{coin.weight} گرم\n"
-            f"🕰 زمان: {get_tehran_time_str()}"
+            f"*🕰 ساعت: {get_tehran_time_str()}🏺*"
         )
         await update.message.reply_text(msg, parse_mode="Markdown")
 
