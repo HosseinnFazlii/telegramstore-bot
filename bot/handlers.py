@@ -126,7 +126,7 @@ async def menu1_handler(update: Update, context: CallbackContext):
                 f"*{product.name}*\n{product.description}\n"
                 f"`💰 {format_price(product.price)} تومان`\n"
                 f"⚖️ {product.weight} گرم\n\n"
-                f"🕰 زمان: {get_tehran_time_str()}"
+                f"*🕰 زمان: {get_tehran_time_str()}*"
                 )
 
         total = len(images)
@@ -198,7 +198,7 @@ async def coin_detail_handler(update: Update, context: CallbackContext):
             f"*🪙{coin.title}*\n"
             f"`💰{format_price(coin.price)} تومان`\n"
             f"⚖️{coin.weight} گرم\n"
-            f"*🕰 ساعت: {get_tehran_time_str()}🏺*"
+            f"*🕰 زمان: {get_tehran_time_str()}*"
         )
         await update.message.reply_text(msg, parse_mode="Markdown")
 
@@ -211,7 +211,7 @@ async def coin2_callback(update: Update, context: CallbackContext):
     message = "🪙 قیمت طلا:\n\n"
     for item in items:
         message += f"{item.description}:\n💰 {item.price} تومان\n\n"
-    message+=f"🕰 زمان: {get_tehran_time_str()}"
+    message+=f"*🕰زمان: {get_tehran_time_str()}*"
     await query.message.edit_text(message)
 
 

@@ -38,3 +38,12 @@ class TelegramUserAdmin(admin.ModelAdmin):
     search_fields = ['telegram_id', 'phone_number']
     readonly_fields = ['started_at']
     list_filter = ['started_at']
+
+
+from django.contrib import admin
+from .models import ChannelMessage
+
+@admin.register(ChannelMessage)
+class ChannelMessageAdmin(admin.ModelAdmin):
+    list_display = ['title', 'schedule_type', 'scheduled_time', 'scheduled_datetime', 'sent']
+    list_filter = ['schedule_type', 'sent']

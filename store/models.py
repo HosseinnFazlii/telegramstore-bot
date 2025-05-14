@@ -49,3 +49,17 @@ class TelegramUser(models.Model):
 
     def __str__(self):
         return str(self.telegram_id)
+    
+
+
+class ChannelMessage(models.Model):
+    title = models.CharField(max_length=255)
+    message = models.TextField()
+    # Example: 'daily:08:00' or 'once:2025-05-13 21:00'
+    schedule_type = models.CharField(max_length=10, choices=[('daily', 'Daily'), ('once', 'Once')])
+    scheduled_time = models.TimeField(null=True, blank=True)       # for daily
+    scheduled_datetime = models.DateTimeField(null=True, blank=True)  # for once
+    sent = models.BooleanField(default=False)  # To prevent re-sending 'once'
+
+    def __str__(self):
+        return self.title
