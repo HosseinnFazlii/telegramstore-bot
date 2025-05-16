@@ -9,7 +9,28 @@ from gold.models import GoldPrice, Coin
 from asgiref.sync import sync_to_async
 from django.conf import settings
 from django.utils.timezone import now
+from functools import wraps
 import pytz
+
+@sync_to_async
+def has_phone(telegram_id):
+    return TelegramUser.objects.filter(telegram_id=telegram_id, phone_number__isnull=False).exists()
+
+def phone_required(func):
+    @wraps(func)
+    async def wrapper(update: Update, context: CallbackContext, *args, **kwargs):
+        telegram_id = update.effective_user.id
+        if not await has_phone(telegram_id):
+            from .handlers import get_msg_sync  # avoid circular import
+            msg = await get_msg_sync("error1")
+            target = update.message or update.callback_query.message
+            await target.reply_text(msg.message if msg else "شماره موبایل شما ثبت نشده است.")
+            return
+        return await func(update, context, *args, **kwargs)
+    return wrapper
+
+
+
 
 def format_price(amount):
     return f"{int(amount):,}".replace(",", ",")
@@ -82,7 +103,7 @@ async def phone_handler(update: Update, context: CallbackContext):
     await update_user_phone_sync(telegram_id=telegram_id, phone=phone)
     await show_main_menu(update)
 
-
+@phone_required
 async def show_main_menu(update: Update):
     telegram_id = update.effective_user.id
     if not await user_has_phone_sync(telegram_id):
@@ -106,7 +127,7 @@ async def show_main_menu(update: Update):
     target = update.message or update.callback_query.message
     await target.reply_text(menu_msg.message if menu_msg else "Choose from below:", reply_markup=reply_markup)
 
-
+@phone_required
 async def menu1_handler(update: Update, context: CallbackContext):
     telegram_id = update.effective_user.id
     if not await user_has_phone_sync(telegram_id):
@@ -149,7 +170,7 @@ async def menu1_handler(update: Update, context: CallbackContext):
             parse_mode="Markdown"
         )
 
-
+@phone_required
 async def menu2_handler(update: Update, context: CallbackContext):
     btn1 = await get_msg_sync("coin1")  # Persian label: سکه پارسیان
     btn2 = await get_msg_sync("coin2")  # Persian label: طلا و سکه
@@ -203,7 +224,7 @@ async def coin_detail_handler(update: Update, context: CallbackContext):
         await update.message.reply_text(msg, parse_mode="Markdown")
 
 
-
+@phone_required
 async def coin2_callback(update: Update, context: CallbackContext):
     query = update.callback_query
     await query.answer()
@@ -219,6 +240,7 @@ async def back_to_menu_callback(update: Update, context: CallbackContext):
     await update.callback_query.answer()
     await show_main_menu(update)
 
+@phone_required
 async def menu3_handler(update: Update, context: CallbackContext):
     msg = await get_msg_sync("contactus")
     if msg:
