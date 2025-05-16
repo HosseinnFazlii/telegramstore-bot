@@ -49,16 +49,20 @@ class ChannelMessageForm(forms.ModelForm):
         model = ChannelMessage
         fields = '__all__'
         widgets = {
-            'scheduled_time': forms.TimeInput(
-                format='%H:%M',
-                attrs={'type': 'time'}
-            ),
-            'scheduled_datetime': forms.DateTimeInput(
-                format='%Y-%m-%dT%H:%M',
-                attrs={'type': 'datetime-local'}
-            ),
+            'scheduled_time': forms.TimeInput(format='%H:%M', attrs={'type': 'time'}),
+            'scheduled_datetime': forms.DateTimeInput(format='%Y-%m-%d %H:%M', attrs={'type': 'datetime-local'}),
         }
 
+    def clean(self):
+        cleaned_data = super().clean()
+        schedule_type = cleaned_data.get("schedule_type")
+        scheduled_time = cleaned_data.get("scheduled_time")
+        scheduled_datetime = cleaned_data.get("scheduled_datetime")
+
+        if schedule_type == "daily" and not scheduled_time:
+            raise forms.ValidationError("برای حالت روزانه، زمان باید مشخص شود.")
+        if schedule_type == "once" and not scheduled_datetime:
+            raise forms.ValidationError("برای ارسال یک‌باره، تاریخ و زمان باید مشخص شود.")
 
 @admin.register(ChannelMessage)
 class ChannelMessageAdmin(admin.ModelAdmin):
