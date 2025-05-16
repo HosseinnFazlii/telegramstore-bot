@@ -24,7 +24,7 @@ from celery.schedules import crontab
 
 CELERY_BEAT_SCHEDULE = {
     'send-telegram-channel-messages-every-minute': {
-        'task': 'product.tasks.send_scheduled_messages',
+        'task': 'store.tasks.send_scheduled_messages',
         'schedule': crontab(minute='*'),  # Check every minute
     },
 }
