@@ -42,8 +42,26 @@ class TelegramUserAdmin(admin.ModelAdmin):
 
 from django.contrib import admin
 from .models import ChannelMessage
+from django import forms
+
+class ChannelMessageForm(forms.ModelForm):
+    class Meta:
+        model = ChannelMessage
+        fields = '__all__'
+        widgets = {
+            'scheduled_time': forms.TimeInput(
+                format='%H:%M',
+                attrs={'type': 'time'}
+            ),
+            'scheduled_datetime': forms.DateTimeInput(
+                format='%Y-%m-%dT%H:%M',
+                attrs={'type': 'datetime-local'}
+            ),
+        }
+
 
 @admin.register(ChannelMessage)
 class ChannelMessageAdmin(admin.ModelAdmin):
+    form = ChannelMessageForm
     list_display = ['title', 'schedule_type', 'scheduled_time', 'scheduled_datetime', 'sent']
     list_filter = ['schedule_type', 'sent']
