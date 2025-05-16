@@ -1,6 +1,8 @@
 import os
 from celery import Celery
 
+from celery import crontab
+
 # Set the default Django settings module for the 'celery' program.
 os.environ.setdefault("DJANGO_SETTINGS_MODULE", "core.settings")  # Update 'core' with your project name
 
@@ -20,7 +22,6 @@ app.conf.beat_schedule = {
     },
 }
 
-from celery import crontab
 
 CELERY_BEAT_SCHEDULE = {
     'send-telegram-channel-messages-every-minute': {
