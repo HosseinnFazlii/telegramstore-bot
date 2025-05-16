@@ -12,7 +12,7 @@ def send_scheduled_messages():
         return
 
     bot = Bot(token=token_obj.token)
-    channel_id = "@your_channel_username"  # Replace with your actual channel ID
+    channel_id = "-1002081294344"  # Replace with your actual channel ID
 
     current_time = now()
 
