@@ -76,13 +76,25 @@ def phone_required(func):
     @wraps(func)
     async def wrapper(update: Update, context: CallbackContext, *args, **kwargs):
         telegram_id = update.effective_user.id
-        if not await user_has_phone_sync(telegram_id):
+        user = await sync_to_async(lambda: TelegramUser.objects.filter(telegram_id=telegram_id).first())()
+        
+        valid = (
+            user and 
+            user.phone_number and 
+            user.phone_number.strip().isdigit() and 
+            user.phone_number.startswith("09") and 
+            len(user.phone_number) == 11
+        )
+
+        if not valid:
             msg = await get_msg_sync("error1")
             target = update.message or update.callback_query.message
             await target.reply_text(msg.message if msg else "شماره موبایل شما ثبت نشده است.")
             return
+
         return await func(update, context, *args, **kwargs)
     return wrapper
+
 
 
 async def start_handler(update: Update, context: CallbackContext):
