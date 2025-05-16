@@ -187,7 +187,7 @@ async def coin2_callback(update: Update, context: CallbackContext):
     items = await get_all_gold_prices()
     message = "🪙 قیمت طلا:\n\n"
     for item in items:
-        message += f"*{item.description}*\n`💰 {format_price(item.price)} تومان`\n\n"
+        message += f"*{item.description}*\n`💰 {item.price} تومان`\n\n"
     message += f"*🕰 زمان: {get_tehran_time_str()}*"
     await query.message.edit_text(message, parse_mode="Markdown")
 
