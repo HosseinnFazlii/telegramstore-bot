@@ -2,7 +2,8 @@ from celery import shared_task
 from .models import ChannelMessage
 from telegram import Bot
 from store.models import TelegramBotToken
-from django.utils.timezone import now
+from django.utils.timezone import now, localtime
+import traceback
 
 @shared_task
 def send_scheduled_messages():
@@ -14,7 +15,8 @@ def send_scheduled_messages():
     bot = Bot(token=token_obj.token)
     channel_id = "-1002081294344"  # Replace with your actual channel ID
 
-    current_time = now()
+    current_time = localtime(now())  # use local (Tehran) time
+    print(f"⏰ Task running at: {current_time.strftime('%Y-%m-%d %H:%M:%S')}")
 
     # Daily messages: match time only (hours and minutes)
     daily_msgs = ChannelMessage.objects.filter(
@@ -30,11 +32,19 @@ def send_scheduled_messages():
         sent=False
     )
 
-    for msg in daily_msgs | once_msgs:
+    print(f"🔎 Found {daily_msgs.count()} daily messages.")
+    print(f"🔎 Found {once_msgs.count()} one-time messages.")
+
+    all_msgs = list(daily_msgs) + list(once_msgs)
+
+    for msg in all_msgs:
         try:
+            print(f"📤 Sending message: {msg.title}")
             bot.send_message(chat_id=channel_id, text=msg.message)
+            print(f"✅ Sent message: {msg.title}")
             if msg.schedule_type == "once":
                 msg.sent = True
                 msg.save()
         except Exception as e:
             print(f"❌ Failed to send message '{msg.title}': {e}")
+            traceback.print_exc()
