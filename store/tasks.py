@@ -4,6 +4,16 @@ from celery import shared_task
 from django.utils.timezone import now, localtime
 from .models import ChannelMessage
 from store.models import TelegramBotToken
+import os
+import shutil
+import datetime
+import tempfile
+import subprocess
+import requests
+import logging
+from celery import shared_task
+from store.models import TelegramBotToken
+from django.conf import settings
 
 @shared_task
 def send_scheduled_messages():
@@ -59,17 +69,6 @@ def send_scheduled_messages():
         except Exception as e:
             logging.exception(f"❌ Exception sending message '{msg.title}': {e}")
 
-
-import os
-import shutil
-import datetime
-import tempfile
-import subprocess
-import requests
-import logging
-from celery import shared_task
-from store.models import TelegramBotToken
-from django.conf import settings
 
 
 @shared_task
