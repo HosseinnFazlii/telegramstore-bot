@@ -4,10 +4,8 @@ from bs4 import BeautifulSoup
 from django.utils import timezone
 from celery import shared_task
 from .models import DollorPrice
-import pytz
-from django.utils.timezone import now
+from django.utils.timezone import now, localdate
 
-# Load Telegram credentials
 def extract_usd_price(html):
     """Extracts the USD price from Mazaneh.net HTML."""
     soup = BeautifulSoup(html, "html.parser")
@@ -22,22 +20,29 @@ def extract_usd_price(html):
 @shared_task
 def fetch_and_save_usd_price():
     url = "https://mazaneh.net/"
-    title = "USD"  # Title used in your model to track this value
+    title = "USD"
     
     try:
         response = requests.get(url, timeout=10)
         if response.status_code == 200:
             usd_price = extract_usd_price(response.text)
             if usd_price:
-                last_price = DollorPrice.get_last_price(title)
-                if last_price != usd_price:
-                    # Save new USD price to the database
+                already_exists = DollorPrice.objects.filter(
+                    title=title,
+                    price=usd_price,
+                    recorded_at__date=localdate()
+                ).exists()
+
+                if not already_exists:
                     DollorPrice.objects.create(
                         title=title,
                         price=usd_price,
                         recorded_at=timezone.now()
                     )
+                    logging.info(f"✅ New USD price saved: {usd_price}")
+                else:
+                    logging.info(f"⚠️ USD price '{usd_price}' already exists today, skipping.")
         else:
             logging.error(f"Error fetching USD page: HTTP {response.status_code}")
     except Exception as e:
-        logging.error(f"Exception in fetch_and_save_usd_price: {e}")
+        logging.error(f"❌ Exception in fetch_and_save_usd_price: {e}")
