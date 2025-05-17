@@ -42,6 +42,7 @@ INSTALLED_APPS = [
     'store',
     'bot',
     'gold',
+    'dollar',
 ]
 
 MIDDLEWARE = [

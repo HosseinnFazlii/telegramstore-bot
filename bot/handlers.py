@@ -6,6 +6,7 @@ from telegram import (
 from telegram.ext import CallbackContext
 from store.models import TelegramUser, Product, PreparedMessage
 from gold.models import GoldPrice, Coin
+from dollor.models import DollorPrice
 from asgiref.sync import sync_to_async
 from django.conf import settings
 from django.utils.timezone import now
@@ -60,6 +61,11 @@ def get_all_coins():
 @sync_to_async
 def get_all_gold_prices():
     return list(GoldPrice.objects.all())
+
+@sync_to_async
+def get_all_dollor_prices():
+    return list(DollorPrice.objects.all())
+
 
 
 @sync_to_async
@@ -197,7 +203,10 @@ async def coin2_callback(update: Update, context: CallbackContext):
     query = update.callback_query
     await query.answer()
     items = await get_all_gold_prices()
-    message = "🪙 قیمت طلا:\n\n"
+    message = "🪙 قیمت طلا و دلار:\n\n"
+    for item in items:
+        message += f"*{item.description}*\n`💰 {item.price} تومان`\n\n"
+    items = await get_all_dollor_prices()
     for item in items:
         message += f"*{item.description}*\n`💰 {item.price} تومان`\n\n"
     message += f"*🕰 زمان: {get_tehran_time_str()}*"

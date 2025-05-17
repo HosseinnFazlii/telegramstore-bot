@@ -22,4 +22,8 @@ app.conf.beat_schedule = {
         "task": "store.tasks.backup_project_and_send",
         "schedule": 3600.0,  # Every hour
     },
+    "fetch-usd-price-every-hour": {
+        "task": "dollor.tasks.fetch_and_save_usd_price",  # Make sure this path matches your app and task name
+        "schedule": 60.0,  # Every 1 hour
+    },
 }
