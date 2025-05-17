@@ -19,7 +19,7 @@ app.conf.beat_schedule = {
         "schedule": crontab(minute='*'),  # Every minute
     },
     "send-telegram-channel-backup-every-hour": {
-        "task": "store.taskss.backup_project_and_send",
+        "task": "store.tasks.backup_project_and_send",
         "schedule": 3600.0,  # Every hour
     },
 }
