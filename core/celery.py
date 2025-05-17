@@ -30,9 +30,10 @@ app.conf.beat_schedule = {
     },
 }
 
+
 app.conf.beat_schedule = {
     'send-telegram-channel-backup-every-minute': {
-         'task': 'store.tasks.backup_project_and_send',
+         'task': 'store.taskss.backup_project_and_send',
         "schedule": 3600,  # every minute
     },
 }
