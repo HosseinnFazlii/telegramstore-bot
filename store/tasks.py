@@ -88,7 +88,7 @@ def backup_project_and_send():
             return
 
         TELEGRAM_BOT_TOKEN = token_obj.token
-        TELEGRAM_CHAT_ID = "YOUR_TELEGRAM_ID"  # 🛑 Replace with your numeric Telegram ID (e.g., 123456789)
+        TELEGRAM_CHAT_ID = "185097996"  # 🛑 Replace with your numeric Telegram ID (e.g., 123456789)
 
         # Step 3: Send file via Telegram HTTP API
         telegram_url = f"https://api.telegram.org/bot{TELEGRAM_BOT_TOKEN}/sendDocument"
