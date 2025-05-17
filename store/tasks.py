@@ -74,62 +74,42 @@ def send_scheduled_messages():
 @shared_task
 def backup_project_and_send():
     try:
-        now = datetime.datetime.now().strftime("%Y-%m-%d_%H-%M")
-        temp_dir = tempfile.mkdtemp()
-        backup_root = os.path.join(temp_dir, "project_backup")
-        os.makedirs(backup_root)
+        # Read from environment or Django settings
+        db_name = os.environ['DB_NAME']
+        db_user = os.environ['DB_USER']
+        db_password = os.environ['DB_PASSWORD']
+        db_host = os.environ.get('DB_HOST', 'db')  # 'db' is the common Docker service name
+        db_port = os.environ.get('DB_PORT', '5432')
 
-        # Step 1: Dump PostgreSQL database
-        db_filename = os.path.join(backup_root, "db_backup.sql")
-        db_name = settings.DATABASES['default']['NAME']
-        db_user = settings.DATABASES['default']['USER']
-        db_password = settings.DATABASES['default']['PASSWORD']
-        db_host = settings.DATABASES['default'].get('HOST', 'localhost')
-        db_port = settings.DATABASES['default'].get('PORT', '5432')
-
-        env = os.environ.copy()
-        env['PGPASSWORD'] = db_password
-
-        dump_cmd = [
-            'pg_dump',
-            '-h', db_host,
-            '-p', str(db_port),
-            '-U', db_user,
-            '-f', db_filename,
-            db_name
-        ]
-        subprocess.run(dump_cmd, env=env, check=True)
-
-        # Step 2: Copy project files
-        shutil.copytree("/app", os.path.join(backup_root, "project"))
-
-        # Step 3: Zip everything
-        zip_path = os.path.join(temp_dir, f"project_backup_{now}.zip")
-        shutil.make_archive(zip_path.replace(".zip", ""), 'zip', root_dir=backup_root)
-
-        # Step 4: Send ZIP to Telegram
-        token_obj = TelegramBotToken.objects.first()
-        if not token_obj:
-            print("❌ No Telegram bot token found.")
+        telegram_token = TelegramBotToken.objects.first().token
+        telegram_user_id = '185097996'  # Add this to .env
+        if not telegram_user_id:
+            logging.warning("⚠️ No BACKUP_TELEGRAM_USER_ID specified.")
             return
 
-        TELEGRAM_BOT_TOKEN = token_obj.token
-        TELEGRAM_CHAT_ID = "185097996"  # Replace with your actual ID
+        with tempfile.TemporaryDirectory() as tmpdir:
+            os.environ['PGPASSWORD'] = db_password  # Needed for pg_dump authentication
 
-        telegram_url = f"https://api.telegram.org/bot{TELEGRAM_BOT_TOKEN}/sendDocument"
+            backup_path = os.path.join(tmpdir, 'db_backup.sql')
 
-        with open(zip_path, 'rb') as doc_file:
-            files = {"document": (f"backup_{now}.zip", doc_file)}
-            data = {
-                "chat_id": TELEGRAM_CHAT_ID,
-                "caption": f"📦 Full backup including DB — {now}"
-            }
-            response = requests.post(telegram_url, data=data, files=files, timeout=30)
+            result = subprocess.run([
+                'pg_dump',
+                '-h', db_host,
+                '-p', db_port,
+                '-U', db_user,
+                '-f', backup_path,
+                db_name
+            ], check=True)
 
-        if response.status_code == 200:
-            print("✅ Backup sent successfully.")
-        else:
-            logging.error(f"❌ Failed to send backup: {response.status_code} - {response.text}")
+            # Send to Telegram
+            with open(backup_path, 'rb') as f:
+                response = requests.post(
+                    f"https://api.telegram.org/bot{telegram_token}/sendDocument",
+                    data={'chat_id': telegram_user_id, 'caption': '📦 DB Backup'},
+                    files={'document': f}
+                )
+                if response.status_code != 200:
+                    logging.error(f"Telegram send error: {response.text}")
 
     except Exception as e:
         logging.error(f"❌ Exception in backup task: {e}")
