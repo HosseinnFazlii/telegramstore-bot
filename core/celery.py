@@ -23,9 +23,9 @@ app.conf.beat_schedule = {
 }
 
 
-CELERY_BEAT_SCHEDULE = {
+app.conf.beat_schedule = {
     'send-telegram-channel-messages-every-minute': {
         'task': 'store.tasks.send_scheduled_messages',
-        'schedule': crontab(minute='*'),  # Check every minute
+        'schedule': crontab(minute='*'),  # every minute
     },
 }
