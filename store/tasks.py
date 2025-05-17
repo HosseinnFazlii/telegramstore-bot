@@ -13,7 +13,7 @@ def send_scheduled_messages():
         return
 
     bot = Bot(token=token_obj.token)
-    channel_id = "-1002081294344"  # Replace with your actual channel ID
+    channel_id = "@tala_faramarzi"  # Replace with your actual channel ID
 
     current_time = localtime(now())  # use local (Tehran) time
     print(f"⏰ Task running at: {current_time.strftime('%Y-%m-%d %H:%M:%S')}")
