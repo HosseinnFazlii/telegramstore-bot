@@ -4,7 +4,6 @@ from bs4 import BeautifulSoup
 from django.utils import timezone
 from celery import shared_task
 from .models import DollorPrice
-from django.utils.timezone import now, localdate
 
 def extract_usd_price(html):
     """Extracts the USD price from Mazaneh.net HTML."""
@@ -27,22 +26,20 @@ def fetch_and_save_usd_price():
         if response.status_code == 200:
             usd_price = extract_usd_price(response.text)
             if usd_price:
-                already_exists = DollorPrice.objects.filter(
-                    title=title,
-                    price=usd_price,
-                    recorded_at__date=localdate()
-                ).exists()
+                # Get or create one row only
+                obj, created = DollorPrice.objects.get_or_create(title=title, defaults={
+                    "price": usd_price,
+                    "recorded_at": timezone.now()
+                })
 
-                if not already_exists:
-                    DollorPrice.objects.create(
-                        title=title,
-                        price=usd_price,
-                        recorded_at=timezone.now()
-                    )
-                    logging.info(f"✅ New USD price saved: {usd_price}")
-                else:
-                    logging.info(f"⚠️ USD price '{usd_price}' already exists today, skipping.")
+                if not created and obj.price != usd_price:
+                    obj.price = usd_price
+                    obj.recorded_at = timezone.now()
+                    obj.save()
+                    logging.info(f"✅ USD price updated to {usd_price}")
+                elif not created:
+                    logging.info(f"ℹ️ USD price unchanged: {usd_price}")
         else:
-            logging.error(f"Error fetching USD page: HTTP {response.status_code}")
+            logging.error(f"❌ Error fetching USD page: HTTP {response.status_code}")
     except Exception as e:
         logging.error(f"❌ Exception in fetch_and_save_usd_price: {e}")
