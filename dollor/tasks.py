@@ -3,7 +3,6 @@ import logging
 from bs4 import BeautifulSoup
 from django.utils import timezone
 from celery import shared_task
-from decouple import config
 from .models import DollorPrice
 import pytz
 from django.utils.timezone import now
