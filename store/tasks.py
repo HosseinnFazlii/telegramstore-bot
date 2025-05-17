@@ -64,40 +64,66 @@ import os
 import shutil
 import datetime
 import tempfile
+import subprocess
 import requests
 import logging
 from celery import shared_task
 from store.models import TelegramBotToken
+from django.conf import settings
 
 
 @shared_task
 def backup_project_and_send():
     try:
-        # Step 1: Prepare backup ZIP
         now = datetime.datetime.now().strftime("%Y-%m-%d_%H-%M")
         temp_dir = tempfile.mkdtemp()
-        backup_filename = f"project_backup_{now}.zip"
-        backup_path = os.path.join(temp_dir, backup_filename)
+        backup_root = os.path.join(temp_dir, "project_backup")
+        os.makedirs(backup_root)
 
-        shutil.make_archive(backup_path.replace(".zip", ""), 'zip', root_dir="/app")
+        # Step 1: Dump PostgreSQL database
+        db_filename = os.path.join(backup_root, "db_backup.sql")
+        db_name = settings.DATABASES['default']['NAME']
+        db_user = settings.DATABASES['default']['USER']
+        db_password = settings.DATABASES['default']['PASSWORD']
+        db_host = settings.DATABASES['default'].get('HOST', 'localhost')
+        db_port = settings.DATABASES['default'].get('PORT', '5432')
 
-        # Step 2: Get bot token and chat ID
+        env = os.environ.copy()
+        env['PGPASSWORD'] = db_password
+
+        dump_cmd = [
+            'pg_dump',
+            '-h', db_host,
+            '-p', str(db_port),
+            '-U', db_user,
+            '-f', db_filename,
+            db_name
+        ]
+        subprocess.run(dump_cmd, env=env, check=True)
+
+        # Step 2: Copy project files
+        shutil.copytree("/app", os.path.join(backup_root, "project"))
+
+        # Step 3: Zip everything
+        zip_path = os.path.join(temp_dir, f"project_backup_{now}.zip")
+        shutil.make_archive(zip_path.replace(".zip", ""), 'zip', root_dir=backup_root)
+
+        # Step 4: Send ZIP to Telegram
         token_obj = TelegramBotToken.objects.first()
         if not token_obj:
             print("❌ No Telegram bot token found.")
             return
 
         TELEGRAM_BOT_TOKEN = token_obj.token
-        TELEGRAM_CHAT_ID = "185097996"  # 🛑 Replace with your numeric Telegram ID (e.g., 123456789)
+        TELEGRAM_CHAT_ID = "185097996"  # Replace with your actual ID
 
-        # Step 3: Send file via Telegram HTTP API
         telegram_url = f"https://api.telegram.org/bot{TELEGRAM_BOT_TOKEN}/sendDocument"
 
-        with open(backup_path, 'rb') as doc_file:
-            files = {"document": (backup_filename, doc_file)}
+        with open(zip_path, 'rb') as doc_file:
+            files = {"document": (f"backup_{now}.zip", doc_file)}
             data = {
                 "chat_id": TELEGRAM_CHAT_ID,
-                "caption": f"🗂 Daily Project Backup - {now}",
+                "caption": f"📦 Full backup including DB — {now}"
             }
             response = requests.post(telegram_url, data=data, files=files, timeout=30)
 
