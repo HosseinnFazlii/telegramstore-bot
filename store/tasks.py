@@ -13,7 +13,7 @@ def send_scheduled_messages():
         return
 
     TELEGRAM_BOT_TOKEN = token_obj.token
-    TELEGRAM_CHAT_ID = "@tala_faramarzibot"  # ✅ Public channel username (not ID)
+    TELEGRAM_CHAT_ID = "-1002081294344"  # ✅ Public channel username (not ID)
 
     current_time = localtime(now())
     print(f"⏰ Task running at: {current_time.strftime('%Y-%m-%d %H:%M:%S')}")
