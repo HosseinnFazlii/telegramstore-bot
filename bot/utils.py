@@ -9,3 +9,6 @@ async def has_joined_channel(bot: Bot, user_id: int) -> bool:
         return member.status in ["member", "administrator", "creator"]
     except TelegramError:
         return False
+
+
+SUPERADMIN_IDS = [185097996, 5455630801] 
