@@ -18,6 +18,11 @@ def get_tehran_time_str():
     tehran_tz = pytz.timezone("Asia/Tehran")
     return now().astimezone(tehran_tz).strftime("%Y/%m/%d %H:%M")
 
+@sync_to_async
+def get_bot_stats():
+    total = TelegramUser.objects.count()
+    registered = TelegramUser.objects.exclude(phone_number__isnull=True).exclude(phone_number="").count()
+    return total, registered
 
 def format_price(amount):
     return f"{int(amount):,}"
@@ -130,6 +135,8 @@ async def phone_handler(update: Update, context: CallbackContext):
 
 @phone_required
 async def show_main_menu(update: Update, context: CallbackContext):
+    telegram_id = update.effective_user.id
+
     btn1 = await get_msg_sync("menue1")
     btn2 = await get_msg_sync("menue2")
     btn3 = await get_msg_sync("menue3")
@@ -139,11 +146,36 @@ async def show_main_menu(update: Update, context: CallbackContext):
         KeyboardButton(btn2.message if btn2 else "Menu 2"),
         KeyboardButton(btn3.message if btn3 else "Menu 3")
     ]]
+
+    # ✅ Add "📊 آمار" only if user is a superadmin
+    from .utils import SUPERADMIN_IDS
+    if telegram_id in SUPERADMIN_IDS:
+        keyboard.append([KeyboardButton("📊 آمار")])
+
     reply_markup = ReplyKeyboardMarkup(keyboard, resize_keyboard=True)
     msg = await get_msg_sync("main_menu")
     target = update.message or update.callback_query.message
     await target.reply_text(msg.message if msg else "Choose:", reply_markup=reply_markup)
 
+@phone_required
+async def stats_button_handler(update: Update, context: CallbackContext):
+    telegram_id = update.effective_user.id
+    from .utils import SUPERADMIN_IDS
+
+    if telegram_id not in SUPERADMIN_IDS:
+        return
+
+    total = await sync_to_async(TelegramUser.objects.count)()
+    registered = await sync_to_async(
+        lambda: TelegramUser.objects.exclude(phone_number__isnull=True).exclude(phone_number="").count()
+    )()
+
+    msg = (
+        f"<b>📊 Bot Statistics:</b>\n\n"
+        f"👤 Total Users: <code>{total}</code>\n"
+        f"📱 Registered Users: <code>{registered}</code>"
+    )
+    await update.message.reply_text(msg, parse_mode="HTML")
 
 @phone_required
 async def menu1_handler(update: Update, context: CallbackContext):
