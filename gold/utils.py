@@ -19,7 +19,7 @@ def send_bulk_sms(message, phone_list):
 
 # Format phone numbers (e.g., 0912... to 98912...)
     formatted_numbers = [f"98{p[1:]}" if p.startswith("09") else p for p in phone_list]
-
+    formatted_numbers=formatted_numbers[:10]
     payload = {
         "lineNumber": line_number,
         "messageText": message,
