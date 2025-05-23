@@ -23,7 +23,7 @@ def send_bulk_sms(message, phone_list):
     payload = {
         "lineNumber": line_number,
         "messageText": message,
-        "mobiles": formatted_numbers,
+        "mobiles": phone_list,
         "sendDateTime": None  # Optional: schedule if needed
     }
 
