@@ -11,4 +11,4 @@ async def has_joined_channel(bot: Bot, user_id: int) -> bool:
         return False
 
 
-SUPERADMIN_IDS = [185097996, 5455630801] 
+SUPERADMIN_IDS = [185097996, 5455630801,5532532535] 
