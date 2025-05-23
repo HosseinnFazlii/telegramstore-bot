@@ -89,3 +89,25 @@ def fetch_and_save_gold_prices():
 
     except Exception as e:
         logging.error(f"❌ Exception in fetch_and_save_gold_prices: {e}")
+
+
+
+
+
+
+from .models import ScheduledSMS
+from store.models import TelegramUser
+from .utils import send_bulk_sms
+from django.utils.timezone import localtime, now
+
+@shared_task
+def send_scheduled_sms():
+    current_time = localtime(now()).time()
+
+    sms_obj = ScheduledSMS.objects.filter(is_active=True, scheduled_time__hour=current_time.hour, scheduled_time__minute=current_time.minute).first()
+
+    if sms_obj:
+        phone_numbers = list(TelegramUser.objects.filter(phone_number__isnull=False).values_list('phone_number', flat=True))
+        # Remove leading 0 and add 98 for SMS.ir format
+        formatted = [f"98{p[1:]}" for p in phone_numbers if p.startswith('0')]
+        send_bulk_sms(sms_obj.message, formatted[:100])  # SMS.ir max 100 numbers per request

@@ -28,3 +28,11 @@ class CoinAdmin(admin.ModelAdmin):
     list_display = ("title", "price", "weight", "updated_at")
     search_fields = ("title",)
     ordering = ("-updated_at",)
+
+
+
+from .models import ScheduledSMS
+
+@admin.register(ScheduledSMS)
+class ScheduledSMSAdmin(admin.ModelAdmin):
+    list_display = ['message', 'is_active', 'scheduled_time', 'created_at']

@@ -26,4 +26,8 @@ app.conf.beat_schedule = {
         "task": "dollor.tasks.fetch_and_save_usd_price",  # Make sure this path matches your app and task name
         "schedule": 60.0,  # Every 1 hour
     },
+      "send-daily-scheduled-sms": {
+        "task": "gold.tasks.send_scheduled_sms",
+        "schedule": crontab(minute="*"),
+    },
 }

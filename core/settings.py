@@ -9,7 +9,7 @@ https://docs.djangoproject.com/en/5.1/topics/settings/
 For the full list of settings and their values, see
 https://docs.djangoproject.com/en/5.1/ref/settings/
 """
-
+from decouple import config
 from pathlib import Path
 import os
 
@@ -147,3 +147,6 @@ CELERY_RESULT_BACKEND = "redis://redis:6379/0"
 CELERY_ACCEPT_CONTENT = ["json"]
 CELERY_TASK_SERIALIZER = "json"
 CELERY_TIMEZONE = "Asia/Tehran"  # Adjust to your timezone
+
+SMSIR_API_KEY = config("SMSIR_API_KEY")
+SMS_TEMPLATE_ID = config("SMS_TEMPLATE_ID")

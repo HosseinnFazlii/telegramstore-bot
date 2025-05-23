@@ -31,3 +31,13 @@ class Coin(models.Model):
 
     def __str__(self):
         return f"{self.title} - {self.price} تومان"
+    
+
+class ScheduledSMS(models.Model):
+    message = models.TextField()
+    is_active = models.BooleanField(default=False)
+    scheduled_time = models.TimeField()
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return f"{self.message[:30]} - {self.scheduled_time}"

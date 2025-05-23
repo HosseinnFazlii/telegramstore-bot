@@ -23,3 +23,5 @@ uvicorn[standard]
 bs4
 pytz
 django_celery_beat
+smsir-python
+python-decouple
