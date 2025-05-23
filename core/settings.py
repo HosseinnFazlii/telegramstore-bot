@@ -150,3 +150,4 @@ CELERY_TIMEZONE = "Asia/Tehran"  # Adjust to your timezone
 
 SMSIR_API_KEY = config("SMSIR_API_KEY")
 SMS_TEMPLATE_ID = config("SMS_TEMPLATE_ID")
+SMSIR_LINE_NUMBER = config("SMSIR_LINE_NUMBER")
