@@ -12,6 +12,7 @@ from django.conf import settings
 from django.utils.timezone import now
 from functools import wraps
 import pytz
+import logging
 
 
 def get_tehran_time_str():
@@ -177,36 +178,45 @@ async def stats_button_handler(update: Update, context: CallbackContext):
     )
     await update.message.reply_text(msg, parse_mode="HTML")
 
+logger = logging.getLogger(__name__)
 @phone_required
 async def menu1_handler(update: Update, context: CallbackContext):
     products = await get_all_products_sync()
     for product in products:
-        images = await sync_to_async(list)(product.images.all())
-        if not images:
-            continue
-        image = images[0]
-        image_url = settings.DOMAIN + image.image.url
-        caption = (
-            f"*{product.name}*\n{product.description}\n"
-            f"`💰 {format_price(product.price)} تومان`\n"
-            f"⚖️ {product.weight} گرم\n"
-            f"*🕰 زمان: {get_tehran_time_str()}*"
-        )
-        total = len(images)
-        inline_buttons = [[InlineKeyboardButton("▶️", callback_data=f"next_{product.id}_1")]] if total > 1 else []
-        back_btn = await get_msg_sync("back_to_menu1")
-        inline_buttons.append([
-            InlineKeyboardButton(back_btn.message if back_btn else "🔙 بازگشت به منو", callback_data="back_to_menu")
-        ])
-        await context.bot.send_photo(
-            chat_id=update.effective_chat.id,
-            photo=image_url,
-            caption=caption,
-            reply_markup=InlineKeyboardMarkup(inline_buttons),
-            parse_mode="Markdown"
-        )
+        try:
+            images = await sync_to_async(list)(product.images.all())
+            if not images:
+                logger.warning(f"Product '{product.name}' has no images.")
+                continue
 
+            image = images[0]
+            image_url = settings.DOMAIN + image.image.url
+            logger.info(f"Sending product '{product.name}' with image URL: {image_url}")
 
+            caption = (
+                f"*{product.name}*\n{product.description}\n"
+                f"💰 {format_price(product.price)} تومان\n"
+                f"⚖️ {product.weight} گرم\n"
+                f"*🕰 زمان: {get_tehran_time_str()}*"
+            )
+            total = len(images)
+            inline_buttons = [[InlineKeyboardButton("▶️", callback_data=f"next_{product.id}_1")]] if total > 1 else []
+            back_btn = await get_msg_sync("back_to_menu1")
+            inline_buttons.append([
+                InlineKeyboardButton(back_btn.message if back_btn else "🔙 بازگشت به منو", callback_data="back_to_menu")
+            ])
+
+            await context.bot.send_photo(
+                chat_id=update.effective_chat.id,
+                photo=image_url,
+                caption=caption,
+                reply_markup=InlineKeyboardMarkup(inline_buttons),
+                parse_mode="Markdown"
+            )
+
+        except Exception as e:
+            logger.exception(f"Failed to send photo for product '{product.name}' (ID: {product.id}) - Error: {e}")
+            
 @phone_required
 async def menu2_handler(update: Update, context: CallbackContext):
     btn1 = await get_msg_sync("coin1")
