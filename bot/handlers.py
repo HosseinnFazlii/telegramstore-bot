@@ -196,8 +196,8 @@ async def menu1_handler(update: Update, context: CallbackContext):
 
             caption = (
                 f"*{product.name}*\n{product.description}\n"
-                f"💰 {format_price(product.price)} تومان\n"
-                f"⚖️ {product.weight} گرم\n"
+                f"`💰 {format_price(product.price)} تومان`\n"
+                f"`⚖️ {product.weight} گرم`\n"
                 f"*🕰 زمان: {get_tehran_time_str()}*"
             )
             total = len(images)
