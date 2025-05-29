@@ -13,7 +13,7 @@ from django.utils.timezone import now
 from functools import wraps
 import pytz
 import logging
-from .utils import fetch_and_resize_image
+from .utils import resize_image_from_path
 
 
 def get_tehran_time_str():
@@ -191,8 +191,8 @@ async def menu1_handler(update: Update, context: CallbackContext):
                 continue
 
             image = images[0]
-            image_url = settings.DOMAIN + image.image.url
-            logger.info(f"Sending product '{product.name}' with image URL: {image_url}")
+            image_path = image.image.path  # Local file path
+            logger.info(f"Sending product '{product.name}' with image path: {image_path}")
 
             caption = (
                 f"*{product.name}*\n{product.description}\n"
@@ -207,8 +207,7 @@ async def menu1_handler(update: Update, context: CallbackContext):
                 InlineKeyboardButton(back_btn.message if back_btn else "🔙 بازگشت به منو", callback_data="back_to_menu")
             ])
 
-            # Fetch and resize image
-            image_file = await fetch_and_resize_image(image_url)
+            image_file = resize_image_from_path(image_path)
             if image_file:
                 await context.bot.send_photo(
                     chat_id=update.effective_chat.id,
@@ -218,10 +217,11 @@ async def menu1_handler(update: Update, context: CallbackContext):
                     parse_mode="Markdown"
                 )
             else:
-                logger.warning(f"Image fetch/resize failed for product '{product.name}' (URL: {image_url})")
+                logger.warning(f"Resize failed or file not found: {image_path}")
 
         except Exception as e:
             logger.exception(f"Failed to send photo for product '{product.name}' (ID: {product.id}) - Error: {e}")
+
 
 @phone_required
 async def menu2_handler(update: Update, context: CallbackContext):
