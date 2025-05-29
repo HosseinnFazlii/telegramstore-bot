@@ -25,3 +25,4 @@ pytz
 django_celery_beat
 smsir-python
 python-decouple
+aiohttp

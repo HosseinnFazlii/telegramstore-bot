@@ -13,6 +13,7 @@ from django.utils.timezone import now
 from functools import wraps
 import pytz
 import logging
+from .utils import fetch_and_resize_image
 
 
 def get_tehran_time_str():
@@ -206,17 +207,22 @@ async def menu1_handler(update: Update, context: CallbackContext):
                 InlineKeyboardButton(back_btn.message if back_btn else "🔙 بازگشت به منو", callback_data="back_to_menu")
             ])
 
-            await context.bot.send_photo(
-                chat_id=update.effective_chat.id,
-                photo=image_url,
-                caption=caption,
-                reply_markup=InlineKeyboardMarkup(inline_buttons),
-                parse_mode="Markdown"
-            )
+            # Fetch and resize image
+            image_file = await fetch_and_resize_image(image_url)
+            if image_file:
+                await context.bot.send_photo(
+                    chat_id=update.effective_chat.id,
+                    photo=image_file,
+                    caption=caption,
+                    reply_markup=InlineKeyboardMarkup(inline_buttons),
+                    parse_mode="Markdown"
+                )
+            else:
+                logger.warning(f"Image fetch/resize failed for product '{product.name}' (URL: {image_url})")
 
         except Exception as e:
             logger.exception(f"Failed to send photo for product '{product.name}' (ID: {product.id}) - Error: {e}")
-            
+
 @phone_required
 async def menu2_handler(update: Update, context: CallbackContext):
     btn1 = await get_msg_sync("coin1")
