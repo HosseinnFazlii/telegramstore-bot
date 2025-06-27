@@ -3,11 +3,15 @@ import logging
 from django.core.management.base import BaseCommand
 from telegram.ext import (
     ApplicationBuilder, CommandHandler,
-    MessageHandler, ContextTypes, filters
+    MessageHandler, ContextTypes, filters, CallbackQueryHandler
 )
 from telegram import Update
 from store.models import TelegramBotToken # Assuming store.models is the correct path
-from bot.handlers import start_handler, phone_handler, menu1_handler, menu2_handler, menu3_handler, stats_button_handler # Assuming bot.handlers is correct
+from bot.handlers import (
+    start_handler, phone_handler, menu1_handler, menu2_handler, 
+    menu3_handler, stats_button_handler, coin1_callback, coin2_callback,
+    back_to_menu_callback, image_slider_callback, coin_detail_handler
+)
 from asgiref.sync import sync_to_async
 
 # Logging setup (can be configured via Django settings as well)
@@ -50,6 +54,17 @@ async def start_telegram_bot_logic():
     app.add_handler(MessageHandler(filters.Regex(r'^🔙.*'), start_handler))
     app.add_handler(MessageHandler(filters.Regex(r'^📞.*'), menu3_handler))
     app.add_handler(MessageHandler(filters.Regex(r'^📊.*'), stats_button_handler))
+    
+    # Add callback query handlers for inline keyboards
+    app.add_handler(CallbackQueryHandler(coin1_callback, pattern="^coin1$"))
+    app.add_handler(CallbackQueryHandler(coin2_callback, pattern="^coin2$"))
+    app.add_handler(CallbackQueryHandler(back_to_menu_callback, pattern="^back_to_menu$"))
+    app.add_handler(CallbackQueryHandler(image_slider_callback, pattern="^(next_|prev_).*"))
+    
+    # Add handler for coin detail (when user selects a coin from the list)
+    app.add_handler(MessageHandler(filters.TEXT & (~filters.COMMAND), coin_detail_handler))
+    
+    # Debug handler should be last to catch any unhandled messages
     app.add_handler(MessageHandler(filters.TEXT & (~filters.COMMAND), debug_handler))
 
     stop_event = asyncio.Event()
