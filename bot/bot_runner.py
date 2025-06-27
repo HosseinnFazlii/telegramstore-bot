@@ -52,13 +52,13 @@ def run_bot():
 
     # Inline button handlers
     app.add_handler(CallbackQueryHandler(coin1_callback, pattern="^coin1$"))
-    app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, coin_detail_handler))
+    
     app.add_handler(CallbackQueryHandler(coin2_callback, pattern="^coin2$"))
     app.add_handler(CallbackQueryHandler(back_to_menu_callback, pattern="^back_to_menu$"))
 
     # Fallback for slider (uses dynamic callback data like next_{id}_{index})
     app.add_handler(CallbackQueryHandler(image_slider_callback))
-
+    app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, coin_detail_handler))
     # Debug fallback
     app.add_handler(MessageHandler(filters.ALL, debug_handler))
 
