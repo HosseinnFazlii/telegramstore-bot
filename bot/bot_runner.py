@@ -48,7 +48,7 @@ def run_bot():
     app.add_handler(MessageHandler(filters.Regex(r'^💰.*'), menu2_handler))
     app.add_handler(MessageHandler(filters.Regex(r'^🔙.*'), start_handler))
     app.add_handler(MessageHandler(filters.Regex(r'^📞.*'), menu3_handler))
-    app.add_handler(MessageHandler(filters.Regex("^📊 آمار$"), stats_button_handler))
+    app.add_handler(MessageHandler(filters.Regex(r'^📊.*'), stats_button_handler))
 
     # Inline button handlers
     app.add_handler(CallbackQueryHandler(coin1_callback, pattern="^coin1$"))
