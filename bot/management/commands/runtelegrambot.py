@@ -7,7 +7,7 @@ from telegram.ext import (
 )
 from telegram import Update
 from store.models import TelegramBotToken # Assuming store.models is the correct path
-from bot.handlers import start_handler, phone_handler, menu1_handler # Assuming bot.handlers is correct
+from bot.handlers import start_handler, phone_handler, menu1_handler, menu2_handler, menu3_handler, stats_button_handler # Assuming bot.handlers is correct
 from asgiref.sync import sync_to_async
 
 # Logging setup (can be configured via Django settings as well)
@@ -46,7 +46,10 @@ async def start_telegram_bot_logic():
     app.add_handler(CommandHandler("start", start_handler))
     app.add_handler(MessageHandler(filters.Regex(r'^09\d{9}$'), phone_handler))
     app.add_handler(MessageHandler(filters.Regex(r'^📦.*'), menu1_handler))
+    app.add_handler(MessageHandler(filters.Regex(r'^💰.*'), menu2_handler))
     app.add_handler(MessageHandler(filters.Regex(r'^🔙.*'), start_handler))
+    app.add_handler(MessageHandler(filters.Regex(r'^📞.*'), menu3_handler))
+    app.add_handler(MessageHandler(filters.Regex(r'^📊.*'), stats_button_handler))
     app.add_handler(MessageHandler(filters.TEXT & (~filters.COMMAND), debug_handler))
 
     stop_event = asyncio.Event()
